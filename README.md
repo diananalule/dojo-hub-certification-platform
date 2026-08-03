@@ -1,20 +1,83 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Dojo Hub Certification Platform
 
-# Run and deploy your AI Studio app
+A full-stack certification platform for **Dojo Hub (SMC)** — course delivery, evaluator-graded submissions, and cryptographically verifiable certificates with scannable QR verification.
 
-This contains everything you need to run your app locally.
+Three roles, one platform:
 
-View your app in AI Studio: https://ai.studio/apps/765a7aa0-ec44-4fad-ac44-27b5676a7783
+- **Students** enrol in tracks, work through modules and lesson topics, sit quizzes, and submit work for review
+- **Evaluators** grade submissions against competency rubrics and provide feedback
+- **Admins** build curriculum, manage users and levels, and oversee platform metrics and audit history
 
-## Run Locally
+Every issued certificate carries an HMAC-signed hash and a QR code resolving to a public verification page, so a credential can be checked by anyone without an account.
 
-**Prerequisites:**  Node.js
+## Tech stack
 
+### Backend
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+| Technology | Version | Purpose |
+|---|---|---|
+| **NestJS** | 11 | REST API framework |
+| **PostgreSQL** | 16 | Primary database |
+| **Prisma** | 6 | ORM, migrations, type-safe queries |
+| **Redis** | 7 | Background jobs, Socket.IO adapter |
+| **BullMQ** | 5 | Job queue |
+| **Socket.IO** | 4 | Live notifications |
+| **MinIO** (S3-compatible) | — | Object storage for videos and documents |
+| **Passport / JWT** | — | Auth via httpOnly access + refresh cookies |
+| **bcryptjs** | — | Password hashing |
+| **class-validator** | — | Request payload validation |
+| **Anthropic SDK** | — | AI grading of subjective answers (Claude) |
+| **Swagger** | — | API documentation at `/api/docs` |
+
+### Frontend
+
+| Technology | Version | Purpose |
+|---|---|---|
+| **Next.js** | 16 (App Router) | React framework |
+| **React** | 19 | UI library |
+| **TypeScript** | 5 | Type safety across both apps |
+| **Tailwind CSS** | 4 | Styling |
+| **TanStack Query** | 5 | Server state and caching |
+| **Socket.IO client** | 4 | Real-time updates |
+| **jsPDF + qrcode** | — | Certificate PDF generation with QR verification |
+| **lucide-react** | — | Icons |
+| **Zustand** | — | Client state |
+
+### Infrastructure
+
+Docker Compose runs PostgreSQL, Redis, and MinIO locally. A shared `packages/shared` workspace holds the TypeScript enums and DTOs used by both apps, so the API and frontend never drift apart on the data contract.
+
+## Repository layout
+
+```
+platform/              The application (npm workspaces monorepo)
+  apps/api/            NestJS backend
+  apps/web/            Next.js frontend
+  packages/shared/     Shared enums + DTO types
+  docker-compose.yml   postgres, redis, minio
+src/, index.html       Original standalone prototype, kept for reference
+```
+
+## Getting started
+
+Full setup instructions, demo accounts, and architecture notes are in **[platform/README.md](platform/README.md)**.
+
+Quick version — from the `platform/` directory:
+
+```bash
+npm install
+npm run db:up            # start postgres, redis, minio
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env.local
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:seed
+npm run dev:api          # http://localhost:4000  (docs at /api/docs)
+npm run dev:web          # http://localhost:3000
+```
+
+**Requirements:** Node.js 20.9+, Docker Desktop.
+
+### Environment variables
+
+Real `.env` files are deliberately excluded from version control. Copy the `.env.example` templates and supply your own values — database URL, JWT secrets, S3 credentials, and an `ANTHROPIC_API_KEY` if you want AI-assisted grading. Manual evaluator review works without it.
