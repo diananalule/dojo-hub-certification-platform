@@ -47,9 +47,11 @@ export class CreateTopicDto {
   @Min(1)
   durationSeconds: number;
 
-  @ApiProperty()
+  /** A lesson may be reading/exercise only — no video is a valid topic. */
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
-  videoUrl: string;
+  videoUrl?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

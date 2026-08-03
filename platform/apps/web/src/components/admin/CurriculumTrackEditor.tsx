@@ -39,34 +39,23 @@ export function CurriculumTrackEditor({ trackId }: { trackId: string }) {
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
   const [newModuleTitle, setNewModuleTitle] = useState('');
-  const [newModuleDesc, setNewModuleDesc] = useState('');
-  const [newModuleTools, setNewModuleTools] = useState('');
   const [addModuleError, setAddModuleError] = useState<string | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['track', 'admin', trackId] });
 
+  // A module is just a titled grouping — description and tools belong on its topics.
   const addModule = useMutation({
-    mutationFn: () =>
-      api.post(`/tracks/${trackId}/modules`, {
-        title: newModuleTitle,
-        // Omit rather than send '' so the API treats a blank box as "not written yet".
-        description: newModuleDesc.trim() || undefined,
-        tools: toolsToArray(newModuleTools),
-      }),
+    mutationFn: () => api.post(`/tracks/${trackId}/modules`, { title: newModuleTitle }),
     onSuccess: () => {
       invalidate();
       setNewModuleTitle('');
-      setNewModuleDesc('');
-      setNewModuleTools('');
       setAddModuleError(null);
     },
     onError: (e) => setAddModuleError(e instanceof ApiError ? e.message : 'Failed to add module. Please try again.'),
   });
 
   const titleTooShort = newModuleTitle.length > 0 && newModuleTitle.trim().length < 3;
-  // Description is optional, but a half-typed one is still rejected.
-  const descTooShort = newModuleDesc.trim().length > 0 && newModuleDesc.trim().length < 5;
-  const canAddModule = newModuleTitle.trim().length >= 3 && !descTooShort;
+  const canAddModule = newModuleTitle.trim().length >= 3;
 
   const removeModule = useMutation({
     mutationFn: (moduleId: string) => api.delete(`/tracks/modules/${moduleId}`),
@@ -134,12 +123,11 @@ export function CurriculumTrackEditor({ trackId }: { trackId: string }) {
         <div>
           <h3 className="font-bold text-navy-950 text-sm">+ New Module</h3>
           <p className="text-xs text-navy-500 mt-0.5">
-            Only a title is required — description and tools can be filled in later. Add lesson topics afterward only if you want them; a module is fully valid without any.
+            A module just needs a title — add its lesson topics underneath, where descriptions, tools and video live.
           </p>
         </div>
         {addModuleError && <p className="text-xs text-crimson-600">{addModuleError}</p>}
         <div
-          className="grid grid-cols-1 sm:grid-cols-2 gap-2"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && canAddModule && !addModule.isPending) {
               e.preventDefault();
@@ -147,26 +135,8 @@ export function CurriculumTrackEditor({ trackId }: { trackId: string }) {
             }
           }}
         >
-          <div>
-            <input value={newModuleTitle} onChange={(e) => setNewModuleTitle(e.target.value)} placeholder="Module title" className="input" />
-            {titleTooShort && <p className="text-[10px] text-crimson-600 mt-1">Title needs at least 3 characters.</p>}
-          </div>
-          <div>
-            <textarea
-              value={newModuleDesc}
-              onChange={(e) => setNewModuleDesc(e.target.value)}
-              placeholder="Module description (optional)"
-              rows={3}
-              className="input resize-y"
-            />
-            {descTooShort && <p className="text-[10px] text-crimson-600 mt-1">Description needs at least 5 characters.</p>}
-          </div>
-          <input
-            value={newModuleTools}
-            onChange={(e) => setNewModuleTools(e.target.value)}
-            placeholder="Tools to be used (comma separated, optional)"
-            className="input sm:col-span-2"
-          />
+          <input value={newModuleTitle} onChange={(e) => setNewModuleTitle(e.target.value)} placeholder="Module title" className="input" />
+          {titleTooShort && <p className="text-[10px] text-crimson-600 mt-1">Title needs at least 3 characters.</p>}
         </div>
         <Button size="sm" disabled={!canAddModule} loading={addModule.isPending} onClick={() => addModule.mutate()}>
           <Plus className="w-4 h-4" /> Add Module
@@ -293,24 +263,16 @@ export function CurriculumTrackEditor({ trackId }: { trackId: string }) {
 
 function ModuleEditForm({ module: mod, onCancel, onSaved }: { module: Module; onCancel: () => void; onSaved: () => void }) {
   const [title, setTitle] = useState(mod.title);
-  const [description, setDescription] = useState(mod.description);
-  const [tools, setTools] = useState(mod.tools.join(', '));
   const [error, setError] = useState<string | null>(null);
 
+  // Title only — a module's detail lives on its topics.
   const save = useMutation({
-    mutationFn: () =>
-      api.patch(`/tracks/modules/${mod.id}`, {
-        title,
-        description,
-        tools: toolsToArray(tools),
-      }),
+    mutationFn: () => api.patch(`/tracks/modules/${mod.id}`, { title }),
     onSuccess: onSaved,
     onError: (e) => setError(e instanceof ApiError ? e.message : 'Failed to save module.'),
   });
 
-  // Mirrors the add form: title required, description optional but not half-written.
-  const descTooShort = description.trim().length > 0 && description.trim().length < 5;
-  const canSave = title.trim().length >= 3 && !descTooShort;
+  const canSave = title.trim().length >= 3;
 
   return (
     <div className="p-4 space-y-2.5 bg-navy-50/60">
@@ -322,15 +284,6 @@ function ModuleEditForm({ module: mod, onCancel, onSaved }: { module: Module; on
       </div>
       {error && <p className="text-xs text-crimson-600">{error}</p>}
       <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Module title" className="input" />
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Module description (optional)"
-        rows={4}
-        className="input resize-y"
-      />
-      {descTooShort && <p className="text-[10px] text-crimson-600">Description needs at least 5 characters.</p>}
-      <input value={tools} onChange={(e) => setTools(e.target.value)} placeholder="Tools to be used (comma separated, optional)" className="input" />
       <div className="flex gap-2">
         <Button size="sm" disabled={!canSave} loading={save.isPending} onClick={() => save.mutate()}>
           Save Changes
@@ -373,7 +326,7 @@ function VideoSourceInput({ videoUrl, onVideoUrlChange }: { videoUrl: string; on
         className="input"
       />
       <p className="text-[11px] text-navy-400">
-        Paste a YouTube link or any direct video URL. Leave blank to use a placeholder video.
+        Paste a YouTube link or any direct video URL. Optional — leave blank for a reading or exercise lesson.
       </p>
     </div>
   );
@@ -405,7 +358,8 @@ function ModuleDetail({
         title,
         description: description.trim() || undefined,
         durationSeconds,
-        videoUrl: videoUrl || 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4',
+        // No video is a valid lesson — don't substitute a placeholder clip.
+        videoUrl: videoUrl.trim() || undefined,
         tools: toolsToArray(tools),
       }),
     onSuccess: (created) => {

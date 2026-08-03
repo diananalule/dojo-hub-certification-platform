@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, Clock } from 'lucide-react';
+import { FileText, Clock, VideoOff } from 'lucide-react';
 import { TrackDto } from '@dojo-hub/shared';
 import { formatDuration, youTubeEmbedUrl, youTubeId } from '@/lib/video';
 import { Badge } from '../ui/Badge';
@@ -18,19 +18,26 @@ export function TopicPreview({ topic }: { topic: Topic }) {
     <div className="border-t border-navy-100 bg-white px-3 py-3 space-y-3">
       <p className="text-[10px] font-mono uppercase text-navy-400 font-bold">Preview — what students see</p>
 
-      <div className="bg-black rounded-lg overflow-hidden aspect-video max-w-md">
-        {ytId ? (
-          <iframe
-            src={youTubeEmbedUrl(ytId)}
-            title={topic.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="w-full h-full border-0"
-          />
-        ) : (
-          <video src={topic.videoUrl} controls preload="metadata" className="w-full h-full" />
-        )}
-      </div>
+      {topic.videoUrl ? (
+        <div className="bg-black rounded-lg overflow-hidden aspect-video max-w-md">
+          {ytId ? (
+            <iframe
+              src={youTubeEmbedUrl(ytId)}
+              title={topic.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full border-0"
+            />
+          ) : (
+            <video src={topic.videoUrl} controls preload="metadata" className="w-full h-full" />
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 max-w-md rounded-lg border border-dashed border-navy-200 bg-navy-50/60 px-3 py-4 text-navy-400">
+          <VideoOff className="w-4 h-4 shrink-0" />
+          <span className="text-xs">No video on this lesson — reading or exercise only.</span>
+        </div>
+      )}
 
       <div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -71,7 +78,7 @@ export function TopicPreview({ topic }: { topic: Topic }) {
         </div>
       )}
 
-      <p className="text-[10px] font-mono text-navy-300 break-all">{topic.videoUrl}</p>
+      {topic.videoUrl && <p className="text-[10px] font-mono text-navy-300 break-all">{topic.videoUrl}</p>}
     </div>
   );
 }

@@ -256,10 +256,10 @@ export class TracksService {
         moduleId,
         order: count,
         title: dto.title,
-        // Optional on the way in, but the column is non-nullable — see CreateTopicDto.
+        // Optional on the way in, but the columns are non-nullable — see CreateTopicDto.
         description: dto.description ?? '',
         durationSeconds: dto.durationSeconds,
-        videoUrl: dto.videoUrl,
+        videoUrl: dto.videoUrl ?? '',
         referenceVideoUrl: dto.referenceVideoUrl,
         tools: dto.tools,
         subtitles: (dto.subtitles ?? [

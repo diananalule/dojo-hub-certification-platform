@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, VideoOff } from 'lucide-react';
 import { TopicDto } from '@dojo-hub/shared';
 import { youTubeEmbedUrl, youTubeId } from '@/lib/video';
 import { Badge } from '../ui/Badge';
@@ -21,6 +21,14 @@ export function VideoPlayer({ topic, onWatched, watched }: { topic: TopicDto; on
 
   return (
     <div className="space-y-3">
+      {!topic.videoUrl ? (
+        // Reading/exercise lesson — no player, but the topic still completes normally
+        // via "Mark as Complete" below.
+        <div className="flex items-center gap-2.5 rounded-2xl border border-dashed border-navy-200 bg-navy-50 px-4 py-6 text-navy-500">
+          <VideoOff className="w-5 h-5 shrink-0" />
+          <span className="text-sm">This lesson has no video — work through the notes below.</span>
+        </div>
+      ) : (
       <div className="relative bg-black rounded-2xl overflow-hidden aspect-video">
         {ytId ? (
           <iframe
@@ -53,11 +61,12 @@ export function VideoPlayer({ topic, onWatched, watched }: { topic: TopicDto; on
           </div>
         )}
       </div>
+      )}
 
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="font-bold text-navy-950">{topic.title}</h3>
-          <p className="text-xs text-navy-500 mt-1">{topic.description}</p>
+          {topic.description && <p className="text-xs text-navy-500 mt-1">{topic.description}</p>}
         </div>
         {watched ? (
           <span className="flex items-center gap-1.5 text-xs font-semibold text-green-700 shrink-0 whitespace-nowrap">
