@@ -1,0 +1,6 @@
+{
+  "name": "Dojo Hub Certification Platform",
+  "description": "A high-fidelity certification platform shell featuring specialized views for Student, Platform Admin, Evaluator, and External Verifier roles with modern, responsive layouts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
