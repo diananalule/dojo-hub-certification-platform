@@ -89,7 +89,7 @@ export function AssessmentWizard({
 
       {step === 'objective' && currentQuestion && (
         <div className="space-y-4">
-          <p className="text-[10px] font-mono uppercase text-navy-400">
+          <p className="text-[12px] font-mono uppercase text-navy-400">
             Question {qIndex + 1} of {objectiveQuestions.length}
           </p>
           <p className="text-sm font-bold text-navy-950">{currentQuestion.question}</p>
@@ -134,7 +134,7 @@ export function AssessmentWizard({
             {!!quiz.subjectiveQuestion.sampleKeywords?.length && (
               <div className="flex flex-wrap gap-1">
                 {quiz.subjectiveQuestion.sampleKeywords.map((k) => (
-                  <span key={k} className="px-2 py-0.5 bg-white border border-navy-200 rounded-full text-[10px]">
+                  <span key={k} className="px-2 py-0.5 bg-white border border-navy-200 rounded-full text-[12px]">
                     {k}
                   </span>
                 ))}

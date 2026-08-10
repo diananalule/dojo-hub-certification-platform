@@ -68,10 +68,10 @@ export default function StudentHomePage() {
                     <TrackCover category={e.track.category.name} icon={e.track.icon} className="h-full min-h-[7rem]" />
                   </div>
                   <div className="p-4 flex-1 min-w-0">
-                    <p className="text-[10px] font-mono uppercase text-crimson-600 font-bold tracking-wide">{e.track.difficulty} Level</p>
+                    <p className="text-[12px] font-mono uppercase text-crimson-600 font-bold tracking-wide">{e.track.difficulty} Level</p>
                     <h4 className="font-bold text-sm text-navy-950 truncate">{e.track.title}</h4>
                     <div className="mt-2">
-                      <div className="flex justify-between text-[10px] text-navy-400 mb-1">
+                      <div className="flex justify-between text-[12px] text-navy-400 mb-1">
                         <span>Syllabus Progress</span>
                         <span>
                           {e.completedTopicCount}/{e.totalTopicCount} units

@@ -97,7 +97,7 @@ export function DurationInput({ value, onChange }: { value: number; onChange: (t
               // Native spinners hidden; the chevrons below are the visible control.
               className="w-12 px-2.5 py-3 text-sm text-navy-950 text-right bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
-            <span className="pr-2 text-[10px] font-mono uppercase text-navy-400 select-none">{field.suffix}</span>
+            <span className="pr-2 text-[12px] font-mono uppercase text-navy-400 select-none">{field.suffix}</span>
             <Stepper
               label={`lesson ${field.key}`}
               onStep={(direction) => onChange(clamp(value + direction * field.step))}
@@ -105,7 +105,7 @@ export function DurationInput({ value, onChange }: { value: number; onChange: (t
           </div>
         ))}
       </div>
-      <p className="mt-1 text-[10px] text-navy-400">
+      <p className="mt-1 text-[12px] text-navy-400">
         Lesson length — seconds step by {SECOND_STEP}. Arrow keys work too.
       </p>
     </div>

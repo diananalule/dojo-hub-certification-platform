@@ -86,16 +86,16 @@ export function SyllabusPanel({
                 <p className="text-xs font-bold text-navy-950">{mod.title}</p>
               </div>
               {mod.topics.length > 0 ? (
-                <p className="text-[10px] text-navy-500 mt-0.5">
+                <p className="text-[12px] text-navy-500 mt-0.5">
                   {completedInMod}/{mod.topics.length} units complete
                 </p>
               ) : (
-                mod.description && <p className="text-[10px] text-navy-500 mt-0.5 line-clamp-2">{mod.description}</p>
+                mod.description && <p className="text-[12px] text-navy-500 mt-0.5 line-clamp-2">{mod.description}</p>
               )}
               {isBriefOnly && (
                 <p
                   className={cn(
-                    'text-[10px] font-semibold mt-1',
+                    'text-[12px] font-semibold mt-1',
                     moduleStatus === 'approved' && 'text-green-700',
                     moduleStatus === 'pending' && 'text-navy-600',
                     moduleStatus === 'rejected' && 'text-red-600',
@@ -135,7 +135,7 @@ export function SyllabusPanel({
                   >
                     {STATUS_ICON[status]}
                     <span className="text-xs text-navy-700 flex-1 truncate">{topic.title}</span>
-                    <span className="text-[10px] text-navy-400 font-mono shrink-0">
+                    <span className="text-[12px] text-navy-400 font-mono shrink-0">
                       {Math.floor(topic.durationSeconds / 60)}:{String(topic.durationSeconds % 60).padStart(2, '0')}
                     </span>
                   </button>
@@ -160,7 +160,7 @@ export function SyllabusPanel({
           <GraduationCap className="w-5 h-5 text-crimson-600" />
           <div>
             <p className="text-xs font-bold text-crimson-700">Take Final Course Assessment</p>
-            <p className="text-[10px] text-navy-500">Optional self-check — doesn&apos;t affect certification progress</p>
+            <p className="text-[12px] text-navy-500">Optional self-check — doesn&apos;t affect certification progress</p>
           </div>
         </button>
       )}

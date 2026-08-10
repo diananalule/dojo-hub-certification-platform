@@ -261,7 +261,7 @@ function QuizGradeRow({ attempt, onGraded }: { attempt: QuizAttemptPending; onGr
         <div className="mt-4 space-y-3 animate-fadeIn">
           <p className="text-xs bg-navy-50 p-3 rounded-lg text-navy-700">{attempt.subjectiveAnswerText}</p>
           <div>
-            <div className="flex justify-between text-[10px] text-navy-400 mb-1 font-mono">
+            <div className="flex justify-between text-[12px] text-navy-400 mb-1 font-mono">
               <span>0%</span>
               <span className="font-bold text-navy-950">{score}%</span>
               <span>100%</span>

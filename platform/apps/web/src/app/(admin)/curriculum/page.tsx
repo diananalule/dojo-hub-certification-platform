@@ -111,7 +111,7 @@ export default function CurriculumProgramsPage() {
               </div>
               <h4 className="font-bold text-sm text-navy-950">{t.title}</h4>
               <p className="text-xs text-navy-500 line-clamp-2">{t.description}</p>
-              <p className="text-[10px] text-navy-400">
+              <p className="text-[12px] text-navy-400">
                 {t.durationWeeks} Weeks duration • {t.difficulty}
               </p>
               <div className="flex gap-2 pt-1">
@@ -142,7 +142,7 @@ export default function CurriculumProgramsPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <label className="text-[10px] font-mono uppercase tracking-wider font-bold text-navy-500 block">{label}</label>
+      <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 block">{label}</label>
       {children}
     </div>
   );

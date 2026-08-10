@@ -5,17 +5,25 @@
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
 
   /*
-   * Type scale nudged up one notch from Tailwind's defaults — the stock 12px/14px
-   * body text read as too small on this app's dense dashboards. Overriding the
-   * tokens lifts every `text-xs`/`text-sm` in the app at once, so sizing stays
-   * consistent instead of drifting per-component.
+   * Type scale lifted well above Tailwind's defaults — the stock 12px/14px body text
+   * read as too small on this app's dense dashboards, and a second pass raised it
+   * again for legibility during in-room demos. Overriding the tokens lifts every
+   * `text-xs`/`text-sm`/`text-base` in the app at once, so sizing stays consistent
+   * instead of drifting per-component.
    */
-  --text-xs: 0.8125rem; /* 13px (was 12px) */
-  --text-xs--line-height: 1.15rem;
-  --text-sm: 0.9375rem; /* 15px (was 14px) */
-  --text-sm--line-height: 1.4rem;
-  --text-base: 1.0625rem; /* 17px (was 16px) */
-  --text-base--line-height: 1.6rem;
+  --text-xs: 0.875rem; /* 14px (Tailwind default 12px) */
+  --text-xs--line-height: 1.25rem;
+  --text-sm: 1rem; /* 16px (default 14px) */
+  --text-sm--line-height: 1.5rem;
+  --text-base: 1.125rem; /* 18px (default 16px) */
+  --text-base--line-height: 1.7rem;
+  /* Headings lifted in step so the ramp above body text stays visible. */
+  --text-lg: 1.25rem; /* 20px (default 18px) */
+  --text-lg--line-height: 1.8rem;
+  --text-xl: 1.375rem; /* 22px (default 20px) */
+  --text-xl--line-height: 1.9rem;
+  --text-2xl: 1.625rem; /* 26px (default 24px) */
+  --text-2xl--line-height: 2.1rem;
 
   /* Dark navy — the app's primary "ink" surface (sidebar, headers-on-dark, hero panels) */
   --color-navy-50: #f4f6f9;

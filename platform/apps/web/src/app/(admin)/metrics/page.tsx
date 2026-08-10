@@ -101,7 +101,7 @@ export default function AdminMetricsPage() {
               <div key={t.trackId} className="border border-navy-100 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <p className="font-bold text-sm text-navy-950">{t.trackTitle}</p>
-                  <span className="text-[10px] font-mono uppercase text-navy-400">{t.category}</span>
+                  <span className="text-[12px] font-mono uppercase text-navy-400">{t.category}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   <Stat label="Enrollments" value={t.enrollments} />
@@ -121,7 +121,7 @@ export default function AdminMetricsPage() {
             <Stat label="Pending" value={metrics.certificatesPending} big />
           </div>
           <div className="pt-4 border-t border-navy-100 space-y-2">
-            <p className="text-[10px] font-mono uppercase text-navy-400">Governance Shortcuts</p>
+            <p className="text-[12px] font-mono uppercase text-navy-400">Governance Shortcuts</p>
             <Button variant="dark" className="w-full" loading={generateReport.isPending} onClick={() => generateReport.mutate()}>
               <Download className="w-4 h-4" /> Generate Progress &amp; Usage Report (PDF)
             </Button>
@@ -135,7 +135,7 @@ export default function AdminMetricsPage() {
 function Stat({ label, value, big }: { label: string; value: string | number; big?: boolean }) {
   return (
     <div className="bg-navy-50 rounded-lg p-2.5 text-center">
-      <p className="text-[9px] uppercase text-navy-400 font-mono">{label}</p>
+      <p className="text-[12px] uppercase text-navy-400 font-mono">{label}</p>
       <p className={big ? 'text-lg font-extrabold text-navy-950' : 'text-sm font-bold text-navy-950'}>{value}</p>
     </div>
   );

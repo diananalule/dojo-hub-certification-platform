@@ -87,7 +87,7 @@ export default function AdminUsersPage() {
         )}
         {!isLoading && (
         <table className="w-full text-sm">
-          <thead className="bg-navy-50 text-[10px] font-mono uppercase text-navy-400">
+          <thead className="bg-navy-50 text-[12px] font-mono uppercase text-navy-400">
             <tr>
               <th className="text-left px-6 py-3">Name &amp; Contact</th>
               <th className="text-left px-6 py-3">Joined</th>
@@ -177,7 +177,7 @@ function PendingQueuePanel() {
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-sm font-bold text-navy-950 uppercase tracking-wide">Platform Pending Queue</h2>
         {submissions.length > 0 && (
-          <span className="w-5 h-5 rounded-full bg-crimson-600 text-white text-[10px] font-bold flex items-center justify-center">
+          <span className="w-5 h-5 rounded-full bg-crimson-600 text-white text-[12px] font-bold flex items-center justify-center">
             {submissions.length}
           </span>
         )}
@@ -215,7 +215,7 @@ function PendingQueuePanel() {
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <Badge tone={sub.type === 'CAPSTONE' ? 'red' : 'blue'}>{sub.type === 'CAPSTONE' ? 'Capstone' : 'Topic Unit'}</Badge>
-                <span className="text-[10px] text-navy-400 hidden sm:inline font-mono">{new Date(sub.submittedAt).toLocaleDateString()}</span>
+                <span className="text-[12px] text-navy-400 hidden sm:inline font-mono">{new Date(sub.submittedAt).toLocaleDateString()}</span>
                 <Button size="sm" variant={expandedId === sub.id ? 'dark' : 'outline'} onClick={() => setExpandedId(expandedId === sub.id ? null : sub.id)}>
                   <ClipboardCheck className="w-3.5 h-3.5" /> Review
                 </Button>

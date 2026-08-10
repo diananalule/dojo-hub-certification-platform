@@ -69,7 +69,7 @@ export function SubmissionWorkspace({
           <div className="bg-white rounded-lg border border-navy-200 p-3 text-xs">
             <p className="font-bold text-navy-500 mb-1">Supervisor Feedback ({existing.score}%)</p>
             <p className="text-navy-600">{existing.feedback}</p>
-            <p className="text-[10px] text-navy-400 mt-1">— {existing.evaluatorName}</p>
+            <p className="text-[12px] text-navy-400 mt-1">— {existing.evaluatorName}</p>
           </div>
         )}
       </div>
@@ -92,7 +92,7 @@ export function SubmissionWorkspace({
       {error && <div className="bg-crimson-50 border border-crimson-200 rounded-lg p-2.5 text-xs text-crimson-700">{error}</div>}
 
       <div className="space-y-2">
-        <label className="text-[10px] font-mono uppercase tracking-wider font-bold text-navy-500">Evidence Links</label>
+        <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500">Evidence Links</label>
         {links.map((link, i) => (
           <div key={i} className="flex gap-2">
             <input
@@ -118,7 +118,7 @@ export function SubmissionWorkspace({
         ))}
         <button
           onClick={() => setLinks([...links, { url: '', description: '' }])}
-          className="text-[11px] font-semibold text-crimson-600 flex items-center gap-1"
+          className="text-[13px] font-semibold text-crimson-600 flex items-center gap-1"
         >
           <Plus className="w-3 h-3" /> Add another link
         </button>
@@ -126,7 +126,7 @@ export function SubmissionWorkspace({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="text-[10px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1">Documents</label>
+          <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1">Documents</label>
           <FileDropzone
             kind={StoredFileKind.DOCUMENT}
             accept=".pdf,.doc,.docx,.zip,.txt,.json,.png,.jpg"
@@ -135,7 +135,7 @@ export function SubmissionWorkspace({
           />
         </div>
         <div>
-          <label className="text-[10px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1">Demo Video</label>
+          <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1">Demo Video</label>
           <FileDropzone
             kind={StoredFileKind.VIDEO}
             accept="video/*"
@@ -146,7 +146,7 @@ export function SubmissionWorkspace({
       </div>
 
       <div>
-        <label className="text-[10px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1">Notes</label>
+        <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1">Notes</label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}

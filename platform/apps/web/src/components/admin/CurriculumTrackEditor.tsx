@@ -136,7 +136,7 @@ export function CurriculumTrackEditor({ trackId }: { trackId: string }) {
           }}
         >
           <input value={newModuleTitle} onChange={(e) => setNewModuleTitle(e.target.value)} placeholder="Module title" className="input" />
-          {titleTooShort && <p className="text-[10px] text-crimson-600 mt-1">Title needs at least 3 characters.</p>}
+          {titleTooShort && <p className="text-[12px] text-crimson-600 mt-1">Title needs at least 3 characters.</p>}
         </div>
         <Button size="sm" disabled={!canAddModule} loading={addModule.isPending} onClick={() => addModule.mutate()}>
           <Plus className="w-4 h-4" /> Add Module
@@ -277,7 +277,7 @@ function ModuleEditForm({ module: mod, onCancel, onSaved }: { module: Module; on
   return (
     <div className="p-4 space-y-2.5 bg-navy-50/60">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-mono uppercase text-navy-400 font-bold">Editing Module</p>
+        <p className="text-[12px] font-mono uppercase text-navy-400 font-bold">Editing Module</p>
         <button onClick={onCancel} aria-label="Cancel editing module" className="text-navy-400 hover:text-navy-800">
           <X className="w-4 h-4" />
         </button>
@@ -315,7 +315,7 @@ function VideoSourceInput({ videoUrl, onVideoUrlChange }: { videoUrl: string; on
 
       <div className="flex items-center gap-2">
         <span className="h-px flex-1 bg-navy-100" />
-        <span className="text-[11px] font-semibold text-navy-400 uppercase tracking-wide">or paste a link</span>
+        <span className="text-[13px] font-semibold text-navy-400 uppercase tracking-wide">or paste a link</span>
         <span className="h-px flex-1 bg-navy-100" />
       </div>
 
@@ -325,7 +325,7 @@ function VideoSourceInput({ videoUrl, onVideoUrlChange }: { videoUrl: string; on
         placeholder="https://www.youtube.com/watch?v=..."
         className="input"
       />
-      <p className="text-[11px] text-navy-400">
+      <p className="text-[13px] text-navy-400">
         Paste a YouTube link or any direct video URL. Optional — leave blank for a reading or exercise lesson.
       </p>
     </div>
@@ -393,7 +393,7 @@ function ModuleDetail({
     <div className="border-t border-navy-100 p-4 space-y-4 bg-navy-50/40">
       {mod.description && (
         <div className="bg-white rounded-xl border border-navy-100 p-3">
-          <p className="text-[10px] font-mono uppercase text-navy-400 font-bold mb-1">Module Description</p>
+          <p className="text-[12px] font-mono uppercase text-navy-400 font-bold mb-1">Module Description</p>
           <p className="text-xs text-navy-700 whitespace-pre-wrap">{mod.description}</p>
         </div>
       )}
@@ -425,7 +425,7 @@ function ModuleDetail({
                     )}
                   />
                   <span className="text-xs text-navy-950 truncate group-hover:text-crimson-600">{topic.title}</span>
-                  <span className="text-[10px] text-navy-400 font-mono">{formatDuration(topic.durationSeconds)}</span>
+                  <span className="text-[12px] text-navy-400 font-mono">{formatDuration(topic.durationSeconds)}</span>
                 </button>
                 <div className="flex items-center gap-3 shrink-0">
                   <button
@@ -454,17 +454,17 @@ function ModuleDetail({
       </div>
 
       <div className="bg-white rounded-xl border border-navy-200 p-3 space-y-2">
-        <p className="text-[10px] font-mono uppercase text-navy-400 font-bold">Add Lesson Topic</p>
-        <p className="text-[10px] text-navy-500">Only a title is required — everything else can be filled in later.</p>
+        <p className="text-[12px] font-mono uppercase text-navy-400 font-bold">Add Lesson Topic</p>
+        <p className="text-[12px] text-navy-500">Only a title is required — everything else can be filled in later.</p>
 
         {justSavedTitle && (
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg px-2.5 py-1.5">
+          <p className="flex items-center gap-1.5 text-[13px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg px-2.5 py-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
             Saved “{justSavedTitle}” — it&apos;s in the list above, opened for preview.
           </p>
         )}
         {addTopicError && (
-          <p className="text-[11px] font-semibold text-crimson-700 bg-crimson-50 border border-crimson-200 rounded-lg px-2.5 py-1.5">
+          <p className="text-[13px] font-semibold text-crimson-700 bg-crimson-50 border border-crimson-200 rounded-lg px-2.5 py-1.5">
             {addTopicError}
           </p>
         )}
@@ -479,7 +479,7 @@ function ModuleDetail({
             placeholder="Topic title"
             className="input"
           />
-          {title.length > 0 && title.trim().length < 3 && <p className="text-[10px] text-crimson-600 mt-1">Title needs at least 3 characters.</p>}
+          {title.length > 0 && title.trim().length < 3 && <p className="text-[12px] text-crimson-600 mt-1">Title needs at least 3 characters.</p>}
         </div>
         <div>
           <textarea
@@ -489,7 +489,7 @@ function ModuleDetail({
             rows={3}
             className="input resize-y"
           />
-          {topicDescTooShort && <p className="text-[10px] text-crimson-600 mt-1">Description needs at least 5 characters.</p>}
+          {topicDescTooShort && <p className="text-[12px] text-crimson-600 mt-1">Description needs at least 5 characters.</p>}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-start">
           <DurationInput value={durationSeconds} onChange={setDurationSeconds} />
@@ -502,7 +502,7 @@ function ModuleDetail({
           </Button>
           {/* Without this the button just sits greyed out with no stated reason. */}
           {!canAddTopic && (
-            <span className="text-[10px] text-navy-400">
+            <span className="text-[12px] text-navy-400">
               {title.trim().length < 3 ? 'Enter a topic title to enable this.' : 'Finish or clear the description to enable this.'}
             </span>
           )}
@@ -540,7 +540,7 @@ function TopicEditForm({ topic, onCancel, onSaved }: { topic: Topic; onCancel: (
   return (
     <div className="bg-white border border-navy-200 rounded-lg p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-mono uppercase text-navy-400 font-bold">Editing Topic</p>
+        <p className="text-[12px] font-mono uppercase text-navy-400 font-bold">Editing Topic</p>
         <button onClick={onCancel} aria-label="Cancel editing topic" className="text-navy-400 hover:text-navy-800">
           <X className="w-4 h-4" />
         </button>
@@ -554,7 +554,7 @@ function TopicEditForm({ topic, onCancel, onSaved }: { topic: Topic; onCancel: (
         rows={3}
         className="input resize-y"
       />
-      {descTooShort && <p className="text-[10px] text-crimson-600">Description needs at least 5 characters.</p>}
+      {descTooShort && <p className="text-[12px] text-crimson-600">Description needs at least 5 characters.</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-start">
         <DurationInput value={durationSeconds} onChange={setDurationSeconds} />
         <input value={tools} onChange={(e) => setTools(e.target.value)} placeholder="Tools (comma separated)" className="input" />

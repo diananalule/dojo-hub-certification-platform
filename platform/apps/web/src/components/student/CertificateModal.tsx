@@ -251,13 +251,13 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={logo?.dataUrl ?? LOGO_SRC} alt="Dojo Hub" className="h-16 w-auto mx-auto" />
 
-          <p className="mt-2 text-[9px] uppercase tracking-[0.2em] text-navy-400">Official Verifiable Credential</p>
+          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-navy-400">Official Verifiable Credential</p>
 
           <h2 className="mt-5 text-2xl sm:text-3xl font-extrabold tracking-tight text-navy-950">
             CERTIFICATE OF COMPLETION
           </h2>
 
-          <p className="mt-4 text-[10px] uppercase tracking-[0.2em] text-navy-400">Has been awarded to</p>
+          <p className="mt-4 text-[12px] uppercase tracking-[0.2em] text-navy-400">Has been awarded to</p>
           <p className="mt-2 text-3xl font-bold italic text-crimson-600">{credential.studentName}</p>
           <div className="mx-auto mt-2 h-px w-2/3 bg-navy-200" />
           <p className="mt-2 text-xs text-navy-400">{credential.studentEmail}</p>
@@ -269,7 +269,7 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
             <div>
               <p className="text-sm text-navy-900">{issuedOn}</p>
               <div className="mt-1 h-px bg-navy-950" />
-              <p className="mt-1 text-[8px] font-bold uppercase tracking-widest text-navy-500">Date of Issuance</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-navy-500">Date of Issuance</p>
             </div>
 
             <div className="flex flex-col items-center">
@@ -284,11 +284,11 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
                 </p>
               )}
               <div className="mt-1 h-px bg-navy-950" />
-              <p className="mt-1 text-[8px] font-bold uppercase tracking-widest text-navy-500">Awarded by</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-navy-500">Awarded by</p>
               {signatoryName && (
                 <>
                   <p className="mt-0.5 text-xs font-bold text-navy-950 leading-tight">{signatoryName}</p>
-                  <p className="text-[9px] text-navy-500 leading-tight">{signatoryRole}</p>
+                  <p className="text-[11px] text-navy-500 leading-tight">{signatoryRole}</p>
                 </>
               )}
             </div>
@@ -296,15 +296,15 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
 
           <div className="mt-6 border-t border-navy-100 pt-3 text-left">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-              <p className="text-[9px] font-mono text-navy-500">
+              <p className="text-[11px] font-mono text-navy-500">
                 <span className="text-navy-400">Authentication ID: </span>
                 {authId}
               </p>
               {credential.evaluatorSignatureName && (
-                <p className="text-[9px] text-navy-400">Assessed by {credential.evaluatorSignatureName}</p>
+                <p className="text-[11px] text-navy-400">Assessed by {credential.evaluatorSignatureName}</p>
               )}
             </div>
-            <p className="mt-1 text-[8px] font-mono text-navy-300 break-all">{credential.hash}</p>
+            <p className="mt-1 text-[10px] font-mono text-navy-300 break-all">{credential.hash}</p>
           </div>
         </div>
       </div>

@@ -12,13 +12,13 @@ function EvidenceList({ submission }: { submission: SubmissionDto }) {
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-[10px] font-mono uppercase text-navy-400 font-bold mb-1">Candidate Write-up</p>
+        <p className="text-[12px] font-mono uppercase text-navy-400 font-bold mb-1">Candidate Write-up</p>
         <p className="text-xs text-navy-700 bg-white p-3 rounded-lg border border-navy-100">{submission.submissionText}</p>
       </div>
 
       {submission.links.length > 0 && (
         <div>
-          <p className="text-[10px] font-mono uppercase text-navy-400 font-bold mb-1">Submitted Links</p>
+          <p className="text-[12px] font-mono uppercase text-navy-400 font-bold mb-1">Submitted Links</p>
           <div className="space-y-1.5">
             {submission.links.map((l, i) => (
               <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs bg-white border border-navy-100 rounded-lg px-3 py-2 hover:border-crimson-300">
@@ -32,7 +32,7 @@ function EvidenceList({ submission }: { submission: SubmissionDto }) {
 
       {submission.files.length > 0 && (
         <div>
-          <p className="text-[10px] font-mono uppercase text-navy-400 font-bold mb-1">Submitted Files</p>
+          <p className="text-[12px] font-mono uppercase text-navy-400 font-bold mb-1">Submitted Files</p>
           <div className="space-y-1.5">
             {submission.files.map((f) => (
               <a key={f.id} href={f.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs bg-white border border-navy-100 rounded-lg px-3 py-2 hover:border-crimson-300">
@@ -64,7 +64,7 @@ function DecidedSubmissionSummary({ submission }: { submission: SubmissionDto })
             <p className="text-navy-700">{submission.feedback}</p>
           </div>
         )}
-        <p className="text-[10px] text-navy-400">
+        <p className="text-[12px] text-navy-400">
           Decided by {submission.evaluatorName ?? 'an evaluator'}
           {submission.evaluatedAt && ` on ${new Date(submission.evaluatedAt).toLocaleString()}`}. This decision is final and cannot be changed here.
         </p>
@@ -108,7 +108,7 @@ export function SubmissionReviewPanel({ submission }: { submission: SubmissionDt
       <div className="space-y-4">
         {submission.rubricChecks.length > 0 && (
           <div>
-            <p className="text-[10px] font-mono uppercase text-navy-400 font-bold mb-1">Grading Rubric (all required to approve)</p>
+            <p className="text-[12px] font-mono uppercase text-navy-400 font-bold mb-1">Grading Rubric (all required to approve)</p>
             <div className="space-y-1.5">
               {submission.rubricChecks.map((check) => (
                 <button
@@ -130,7 +130,7 @@ export function SubmissionReviewPanel({ submission }: { submission: SubmissionDt
         )}
 
         <div>
-          <div className="flex justify-between text-[10px] text-navy-400 mb-1">
+          <div className="flex justify-between text-[12px] text-navy-400 mb-1">
             <span>60% Passing</span>
             <span className="font-bold text-navy-950">{score}%</span>
             <span>100% Perfect</span>
@@ -155,7 +155,7 @@ export function SubmissionReviewPanel({ submission }: { submission: SubmissionDt
           className="input resize-none"
         />
         {error && <p className="text-xs text-crimson-600">{error}</p>}
-        {!allChecked && <p className="text-[10px] text-amber-700">Check every rubric item before approving.</p>}
+        {!allChecked && <p className="text-[12px] text-amber-700">Check every rubric item before approving.</p>}
 
         <div className="grid grid-cols-2 gap-3">
           <Button

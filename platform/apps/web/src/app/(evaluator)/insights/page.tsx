@@ -39,7 +39,7 @@ export default function EvaluatorInsightsPage() {
 function Metric({ label, value, sublabel }: { label: string; value: string; sublabel: string }) {
   return (
     <div className="bg-navy-50 rounded-xl p-5 text-center">
-      <p className="text-[10px] font-mono uppercase text-navy-400 font-bold">{label}</p>
+      <p className="text-[12px] font-mono uppercase text-navy-400 font-bold">{label}</p>
       <p className="text-3xl font-extrabold text-navy-950 mt-1">{value}</p>
       <p className="text-xs text-navy-500 mt-1">{sublabel}</p>
     </div>

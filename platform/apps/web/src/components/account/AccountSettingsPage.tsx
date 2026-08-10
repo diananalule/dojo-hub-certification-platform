@@ -84,11 +84,11 @@ export function AccountSettingsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">Full Name</label>
+            <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">Full Name</label>
             <input value={name} onChange={(e) => setName(e.target.value)} className="input" />
           </div>
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">Email Address</label>
+            <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">Email Address</label>
             <input value={user.email} disabled className="input opacity-60 cursor-not-allowed" />
           </div>
         </div>
@@ -120,7 +120,7 @@ export function AccountSettingsPage() {
 
         <div className="space-y-4">
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">Current Password</label>
+            <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">Current Password</label>
             <input
               type="password"
               value={currentPassword}
@@ -131,7 +131,7 @@ export function AccountSettingsPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">New Password</label>
+              <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">New Password</label>
               <input
                 type="password"
                 value={newPassword}
@@ -141,7 +141,7 @@ export function AccountSettingsPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">Confirm New Password</label>
+              <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">Confirm New Password</label>
               <input
                 type="password"
                 value={confirmPassword}

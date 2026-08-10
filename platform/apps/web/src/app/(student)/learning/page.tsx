@@ -104,13 +104,13 @@ function EnrollmentRow({ enrollment }: { enrollment: ReturnType<typeof useMyEnro
         <TrackCover category={enrollment.track.category.name} icon={enrollment.track.icon} className="h-16" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-mono uppercase text-crimson-600 font-bold">{enrollment.track.difficulty}</p>
+        <p className="text-[12px] font-mono uppercase text-crimson-600 font-bold">{enrollment.track.difficulty}</p>
         <h4 className="font-bold text-sm text-navy-950 truncate">{enrollment.track.title}</h4>
         <div className="mt-2 flex items-center gap-3">
           <div className="flex-1 h-1.5 bg-navy-100 rounded-full overflow-hidden max-w-xs">
             <div className="h-full bg-crimson-600" style={{ width: `${progress}%` }} />
           </div>
-          <span className="text-[10px] text-navy-500 shrink-0">{progress}% Complete</span>
+          <span className="text-[12px] text-navy-500 shrink-0">{progress}% Complete</span>
         </div>
       </div>
       <Link href={`/learning/${enrollment.trackId}`}>

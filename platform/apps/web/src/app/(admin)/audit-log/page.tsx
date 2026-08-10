@@ -55,7 +55,7 @@ export default function AuditLogPage() {
             </div>
             <div className="text-right shrink-0">
               <Badge tone={SEVERITY_TONE[log.severity]}>{log.severity}</Badge>
-              <p className="text-[10px] text-navy-400 mt-1">{new Date(log.createdAt).toLocaleString()}</p>
+              <p className="text-[12px] text-navy-400 mt-1">{new Date(log.createdAt).toLocaleString()}</p>
             </div>
           </div>
         ))}

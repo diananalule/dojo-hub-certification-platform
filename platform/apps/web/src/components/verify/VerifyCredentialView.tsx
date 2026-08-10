@@ -69,7 +69,7 @@ export function VerifyCredentialView({ credentialId }: { credentialId: string })
           </>
         )}
 
-        <p className="text-[10px] text-navy-400">Dojo Hub (SMC) • Official Verification Registry</p>
+        <p className="text-[12px] text-navy-400">Dojo Hub (SMC) • Official Verification Registry</p>
       </div>
     </div>
   );
@@ -78,7 +78,7 @@ export function VerifyCredentialView({ credentialId }: { credentialId: string })
 function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex justify-between gap-4">
-      <span className="text-[10px] uppercase text-navy-400 font-mono shrink-0">{label}</span>
+      <span className="text-[12px] uppercase text-navy-400 font-mono shrink-0">{label}</span>
       <span className={`text-xs text-navy-950 text-right ${mono ? 'font-mono break-all' : 'font-semibold'}`}>{value}</span>
     </div>
   );

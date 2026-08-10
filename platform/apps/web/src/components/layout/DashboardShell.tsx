@@ -42,7 +42,7 @@ export function DashboardShell({ role, children }: { role: UserRole; children: R
         mobileOpen={mobileNavOpen}
         onMobileClose={() => setMobileNavOpen(false)}
       />
-      <div className="flex-1 flex flex-col lg:ml-64 min-h-screen min-w-0">
+      <div className="flex-1 flex flex-col lg:ml-72 min-h-screen min-w-0">
         <TopNavbar title={title} subtitle={subtitle} onMenuClick={() => setMobileNavOpen(true)} />
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto min-w-0">{children}</main>
       </div>

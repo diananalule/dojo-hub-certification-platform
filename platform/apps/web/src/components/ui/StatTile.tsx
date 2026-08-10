@@ -32,7 +32,7 @@ export function StatTile({
   return (
     <Card hover className="p-6 flex items-start justify-between gap-4 group">
       <div>
-        <p className="text-[10px] font-mono uppercase tracking-wider text-navy-400 font-bold">{label}</p>
+        <p className="text-[12px] font-mono uppercase tracking-wider text-navy-400 font-bold">{label}</p>
         <p className={cn('text-3xl font-extrabold mt-1.5 tracking-tight', toneClasses)}>{value}</p>
         {sublabel && <p className="text-xs text-navy-500 mt-1">{sublabel}</p>}
       </div>

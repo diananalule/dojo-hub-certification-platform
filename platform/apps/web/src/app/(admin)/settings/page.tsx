@@ -72,7 +72,7 @@ function CategoriesPanel() {
         {categories.map((c) => (
           <div key={c.id} className="flex items-center justify-between bg-navy-50 rounded-lg px-3 py-2">
             <span className="text-sm text-navy-950 font-medium">
-              {c.name} {c.isDefault && <span className="text-[10px] text-navy-400 ml-1">(default)</span>}
+              {c.name} {c.isDefault && <span className="text-[12px] text-navy-400 ml-1">(default)</span>}
             </span>
             {!c.isDefault && (
               <button onClick={() => remove.mutate(c.id)} aria-label={`Delete category "${c.name}"`} className="text-navy-400 hover:text-crimson-600">
@@ -171,7 +171,7 @@ function LevelsPanel() {
       <div className="space-y-2">
         {ordered.map((level, index) => (
           <div key={level.id} className="flex items-center gap-3 bg-navy-50 rounded-lg px-3 py-2.5">
-            <span className="w-6 h-6 shrink-0 rounded-full bg-navy-950 text-white text-[10px] font-bold flex items-center justify-center">
+            <span className="w-6 h-6 shrink-0 rounded-full bg-navy-950 text-white text-[12px] font-bold flex items-center justify-center">
               {index + 1}
             </span>
 

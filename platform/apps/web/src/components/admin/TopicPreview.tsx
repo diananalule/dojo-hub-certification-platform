@@ -16,7 +16,7 @@ export function TopicPreview({ topic }: { topic: Topic }) {
 
   return (
     <div className="border-t border-navy-100 bg-white px-3 py-3 space-y-3">
-      <p className="text-[10px] font-mono uppercase text-navy-400 font-bold">Preview — what students see</p>
+      <p className="text-[12px] font-mono uppercase text-navy-400 font-bold">Preview — what students see</p>
 
       {topic.videoUrl ? (
         <div className="bg-black rounded-lg overflow-hidden aspect-video max-w-md">
@@ -42,7 +42,7 @@ export function TopicPreview({ topic }: { topic: Topic }) {
       <div>
         <div className="flex items-center gap-2 flex-wrap">
           <h4 className="text-sm font-bold text-navy-950">{topic.title}</h4>
-          <span className="flex items-center gap-1 text-[10px] font-mono text-navy-400">
+          <span className="flex items-center gap-1 text-[12px] font-mono text-navy-400">
             <Clock className="w-3 h-3" />
             {formatDuration(topic.durationSeconds)}
           </span>
@@ -62,7 +62,7 @@ export function TopicPreview({ topic }: { topic: Topic }) {
 
       {topic.documents.length > 0 && (
         <div className="space-y-1">
-          <p className="text-[10px] font-mono uppercase text-navy-400 font-bold">Attached Resources</p>
+          <p className="text-[12px] font-mono uppercase text-navy-400 font-bold">Attached Resources</p>
           {topic.documents.map((doc) => (
             <a
               key={doc.id}
@@ -78,7 +78,7 @@ export function TopicPreview({ topic }: { topic: Topic }) {
         </div>
       )}
 
-      {topic.videoUrl && <p className="text-[10px] font-mono text-navy-300 break-all">{topic.videoUrl}</p>}
+      {topic.videoUrl && <p className="text-[12px] font-mono text-navy-300 break-all">{topic.videoUrl}</p>}
     </div>
   );
 }

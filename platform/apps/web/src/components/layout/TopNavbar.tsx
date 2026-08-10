@@ -95,7 +95,7 @@ export function TopNavbar({
           >
             <Bell className="w-[18px] h-[18px]" />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-crimson-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center ring-2 ring-white">
+              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-crimson-600 text-white text-[12px] font-bold rounded-full flex items-center justify-center ring-2 ring-white">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -107,7 +107,7 @@ export function TopNavbar({
                 {unreadCount > 0 && (
                   <button
                     onClick={() => markAllRead.mutate()}
-                    className="link-sweep text-[10px] font-semibold text-crimson-400 hover:text-crimson-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson-500/50 rounded"
+                    className="link-sweep text-[12px] font-semibold text-crimson-400 hover:text-crimson-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson-500/50 rounded"
                   >
                     Mark all read
                   </button>
@@ -119,7 +119,7 @@ export function TopNavbar({
                   <div key={n.id} className={cn('p-3.5 text-xs transition-colors hover:bg-black/[0.02]', !n.read && 'bg-crimson-50/40')}>
                     <p className="font-bold text-navy-950">{n.title}</p>
                     <p className="text-navy-500 mt-0.5">{n.body}</p>
-                    <p className="text-[10px] text-navy-400 mt-1.5 font-mono">{new Date(n.createdAt).toLocaleString()}</p>
+                    <p className="text-[12px] text-navy-400 mt-1.5 font-mono">{new Date(n.createdAt).toLocaleString()}</p>
                   </div>
                 ))}
               </div>
@@ -152,7 +152,7 @@ export function TopNavbar({
               <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
             </div>
             <div className="hidden lg:block leading-none">
-              <p className="text-[9px] font-mono text-navy-400 font-bold uppercase tracking-wider">{ROLE_STATUS[user.role]}</p>
+              <p className="text-[12px] font-mono text-navy-400 font-bold uppercase tracking-wider">{ROLE_STATUS[user.role]}</p>
               <div className="flex items-center gap-1 mt-1">
                 <h4 className="text-xs font-bold text-deep-black tracking-tight">{user.name}</h4>
                 <ChevronDown className={cn('w-3 h-3 text-navy-400 transition-transform duration-300', profileOpen && 'rotate-180')} />
@@ -168,8 +168,8 @@ export function TopNavbar({
                 </div>
                 <div className="flex-1 min-w-0">
                   <h5 className="text-sm font-bold text-white truncate">{user.name}</h5>
-                  <p className="text-[11px] text-navy-300 truncate">{user.email}</p>
-                  <span className="inline-block bg-white/10 text-crimson-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded mt-1.5 border border-white/10">
+                  <p className="text-[13px] text-navy-300 truncate">{user.email}</p>
+                  <span className="inline-block bg-white/10 text-crimson-300 text-[12px] font-mono font-bold px-1.5 py-0.5 rounded mt-1.5 border border-white/10">
                     {ROLE_STATUS[user.role]}
                   </span>
                 </div>

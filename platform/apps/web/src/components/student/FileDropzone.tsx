@@ -92,7 +92,7 @@ export function FileDropzone({
         ) : (
           <>
             <p className="text-xs text-navy-600">Drop a {kind === 'VIDEO' ? 'video' : 'document'} here or click to browse</p>
-            <p className="text-[11px] text-navy-400 mt-0.5">Up to 250 MB</p>
+            <p className="text-[13px] text-navy-400 mt-0.5">Up to 250 MB</p>
           </>
         )}
       </div>
