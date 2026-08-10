@@ -60,8 +60,10 @@ export default function AdminUsersPage() {
           <p className="text-sm text-navy-500 mt-1">Manage student and supervisor accounts and access permissions.</p>
         </div>
         <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3.5 top-3 w-4 h-4 text-navy-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or email..." className="input pl-10 py-2.5" />
+          {/* input-icon, not pl-10 — a pl-* utility ties on specificity with `.input`
+              and loses on source order, dropping the text back under the icon. */}
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-400 pointer-events-none" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or email..." className="input input-icon" />
         </div>
       </div>
 

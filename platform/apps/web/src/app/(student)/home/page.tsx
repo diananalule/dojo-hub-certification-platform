@@ -45,8 +45,10 @@ export default function StudentHomePage() {
           <p className="text-navy-500 mt-1">what would you like to learn today?</p>
         </div>
         <div className="relative w-full lg:w-96">
-          <Search className="absolute left-3.5 top-3 w-4 h-4 text-navy-400" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search topics, tools, or skills..." className="input pl-10 py-2.5" />
+          {/* input-icon, not pl-10 — a pl-* utility ties on specificity with `.input`
+              and loses on source order, dropping the text back under the icon. */}
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-400 pointer-events-none" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search topics, tools, or skills..." className="input input-icon" />
         </div>
       </Card>
 
