@@ -28,7 +28,10 @@ export class LevelsService {
       throw new BadRequestException(
         'A level with this name or order already exists.',
       );
-    return this.prisma.level.create({ data: dto });
+    // passingScore is non-nullable in the schema but no longer meaningful — default it.
+    return this.prisma.level.create({
+      data: { ...dto, passingScore: dto.passingScore ?? 0 },
+    });
   }
 
   async update(id: string, dto: Partial<UpsertLevelDto>) {

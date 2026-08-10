@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Pencil } from 'lucide-react';
+import { Pencil, Plus, Trash2, X } from 'lucide-react';
 import { CategoryDto, LevelDto } from '@dojo-hub/shared';
 import { api, ApiError } from '@/lib/api-client';
 import { Card } from '@/components/ui/Card';
@@ -86,17 +86,51 @@ function CategoriesPanel() {
   );
 }
 
+/**
+ * Rungs are renameable, addable and removable. There is deliberately no pass-score
+ * field: advancement is driven solely by an evaluator approving the student's capstone
+ * (see UsersService.advanceToNextLevel), never by a threshold.
+ */
 function LevelsPanel() {
   const queryClient = useQueryClient();
   const { data: levels = [] } = useQuery<LevelDto[]>({ queryKey: ['levels'], queryFn: () => api.get<LevelDto[]>('/levels') });
-  const [editing, setEditing] = useState<LevelDto | null>(null);
+  const [newName, setNewName] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  const update = useMutation({
-    mutationFn: (level: LevelDto) => api.patch(`/levels/${level.id}`, { passingScore: level.passingScore }),
+  const ordered = [...levels].sort((a, b) => a.order - b.order);
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['levels'] });
+
+  const create = useMutation({
+    // New rungs append to the bottom of the ladder.
+    mutationFn: () => api.post('/levels', { name: newName.trim(), order: (ordered.at(-1)?.order ?? -1) + 1 }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['levels'] });
-      setEditing(null);
+      refresh();
+      setNewName('');
+      setError(null);
     },
+    onError: (e) => setError(e instanceof ApiError ? e.message : 'Failed to add level.'),
+  });
+
+  const rename = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) => api.patch(`/levels/${id}`, { name }),
+    onSuccess: () => {
+      refresh();
+      setEditingId(null);
+      setError(null);
+    },
+    onError: (e) => setError(e instanceof ApiError ? e.message : 'Failed to rename level.'),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => api.delete(`/levels/${id}`),
+    onSuccess: () => {
+      refresh();
+      setError(null);
+    },
+    // The API refuses to delete a level students are on or hold credentials for.
+    onError: (e) => setError(e instanceof ApiError ? e.message : 'Failed to delete level.'),
   });
 
   return (
@@ -104,39 +138,96 @@ function LevelsPanel() {
       <h3 className="font-bold text-navy-950">Certification Ladder</h3>
       <p className="text-xs text-navy-500">
         Students advance to the next level once a supervisor approves their capstone project for their current level.
+        There is no score threshold — a student is never blocked from the next course by a percentage.
       </p>
+
+      {error && <p className="text-xs text-crimson-600">{error}</p>}
+
+      <div className="flex gap-2">
+        <input
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && newName.trim().length >= 2 && !create.isPending) create.mutate();
+          }}
+          placeholder="New level name"
+          aria-label="New level name"
+          className="input flex-1"
+        />
+        <Button
+          size="sm"
+          aria-label="Add level"
+          disabled={newName.trim().length < 2}
+          loading={create.isPending}
+          onClick={() => {
+            setError(null);
+            create.mutate();
+          }}
+        >
+          <Plus className="w-4 h-4" />
+        </Button>
+      </div>
+
       <div className="space-y-2">
-        {[...levels]
-          .sort((a, b) => a.order - b.order)
-          .map((level) => (
-            <div key={level.id} className="bg-navy-50 rounded-lg px-3 py-2.5">
-              {editing?.id === level.id ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-navy-950 w-24 shrink-0">{level.name}</span>
-                  <input
-                    type="number"
-                    value={editing.passingScore}
-                    onChange={(e) => setEditing({ ...editing, passingScore: parseInt(e.target.value, 10) || 0 })}
-                    aria-label={`Passing score for ${level.name}`}
-                    className="input w-16"
-                  />
-                  <Button size="sm" loading={update.isPending} onClick={() => update.mutate(editing)}>
-                    Save
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-sm font-bold text-navy-950">{level.name}</span>
-                    <span className="text-xs text-navy-500 ml-2">{level.passingScore}% pass score</span>
-                  </div>
-                  <button onClick={() => setEditing(level)} aria-label={`Edit ${level.name} level`} className="text-navy-400 hover:text-crimson-600">
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
+        {ordered.map((level, index) => (
+          <div key={level.id} className="flex items-center gap-3 bg-navy-50 rounded-lg px-3 py-2.5">
+            <span className="w-6 h-6 shrink-0 rounded-full bg-navy-950 text-white text-[10px] font-bold flex items-center justify-center">
+              {index + 1}
+            </span>
+
+            {editingId === level.id ? (
+              <>
+                <input
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && editingName.trim().length >= 2) rename.mutate({ id: level.id, name: editingName.trim() });
+                    if (e.key === 'Escape') setEditingId(null);
+                  }}
+                  aria-label={`Rename level "${level.name}"`}
+                  autoFocus
+                  className="input flex-1 py-1.5"
+                />
+                <Button
+                  size="sm"
+                  disabled={editingName.trim().length < 2}
+                  loading={rename.isPending}
+                  onClick={() => rename.mutate({ id: level.id, name: editingName.trim() })}
+                >
+                  Save
+                </Button>
+                <button onClick={() => setEditingId(null)} aria-label="Cancel renaming" className="text-navy-400 hover:text-navy-800">
+                  <X className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="text-sm font-bold text-navy-950 flex-1">{level.name}</span>
+                <button
+                  onClick={() => {
+                    setEditingId(level.id);
+                    setEditingName(level.name);
+                    setError(null);
+                  }}
+                  aria-label={`Rename level "${level.name}"`}
+                  className="text-navy-400 hover:text-navy-800"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => {
+                    setError(null);
+                    remove.mutate(level.id);
+                  }}
+                  aria-label={`Delete level "${level.name}"`}
+                  className="text-navy-400 hover:text-crimson-600"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            )}
+          </div>
+        ))}
       </div>
     </Card>
   );
