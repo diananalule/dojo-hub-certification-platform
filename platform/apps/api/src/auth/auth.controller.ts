@@ -90,8 +90,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     await this.authService.logout(getCookie(req, 'refresh_token'));
-    res.clearCookie('access_token');
-    res.clearCookie('refresh_token', { path: '/api/auth' });
+    // Attributes must mirror how the cookies were set, or the browser may keep them.
+    const isProd = this.configService.get<string>('nodeEnv') === 'production';
+    const crossSite = { sameSite: isProd ? ('none' as const) : ('lax' as const), secure: isProd };
+    res.clearCookie('access_token', { httpOnly: true, ...crossSite });
+    res.clearCookie('refresh_token', { httpOnly: true, ...crossSite, path: '/api/auth' });
     return { success: true };
   }
 
@@ -127,16 +130,21 @@ export class AuthController {
     refreshTtlMs: number,
   ) {
     const isProd = this.configService.get<string>('nodeEnv') === 'production';
+    // In production the web app and API are served from different hostnames (e.g. two
+    // separate Render services), which makes every API call cross-site. A 'lax' cookie
+    // is withheld on cross-site XHR, so the browser would accept the login response and
+    // then silently send no credentials on any subsequent request. 'none' + Secure is
+    // the only combination browsers allow cross-site. Locally both apps share
+    // `localhost`, so 'lax' stays correct there and needs no HTTPS.
+    const crossSite = { sameSite: isProd ? ('none' as const) : ('lax' as const), secure: isProd };
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: isProd,
-      sameSite: 'lax',
+      ...crossSite,
       maxAge: 15 * 60 * 1000,
     });
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: isProd,
-      sameSite: 'lax',
+      ...crossSite,
       maxAge: refreshTtlMs,
       // Must match the app's global 'api' prefix (see main.ts) — every auth route is
       // actually served under /api/auth/*, not /auth/*. A mismatched path here means
