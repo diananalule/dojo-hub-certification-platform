@@ -18,6 +18,22 @@ import { DurationInput } from './DurationInput';
 import { TopicPreview } from './TopicPreview';
 
 type Module = TrackDto['modules'][number];
+
+/** In-progress "Add Lesson Topic" input, held by the parent so collapsing a module
+ *  (which unmounts ModuleDetail) no longer discards what the author has typed. */
+type TopicDraft = {
+  title: string;
+  description: string;
+  durationSeconds: number;
+  videoUrl: string;
+  tools: string;
+};
+
+const EMPTY_DRAFT: TopicDraft = { title: '', description: '', durationSeconds: 600, videoUrl: '', tools: '' };
+
+function draftHasContent(d: TopicDraft): boolean {
+  return Boolean(d.title.trim() || d.description.trim() || d.videoUrl.trim() || d.tools.trim());
+}
 type Topic = Module['topics'][number];
 
 function toolsToArray(raw: string): string[] {
@@ -37,6 +53,7 @@ export function CurriculumTrackEditor({ trackId }: { trackId: string }) {
   const [reviewing, setReviewing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
+  const [topicDrafts, setTopicDrafts] = useState<Record<string, TopicDraft>>({});
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [addModuleError, setAddModuleError] = useState<string | null>(null);
@@ -171,6 +188,11 @@ export function CurriculumTrackEditor({ trackId }: { trackId: string }) {
               >
                 <div className="min-w-0">
                   <p className="font-bold text-sm text-navy-950">{mod.title}</p>
+                  {draftHasContent(topicDrafts[mod.id] ?? EMPTY_DRAFT) && (
+                    <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                      Unsaved lesson
+                    </span>
+                  )}
                   {mod.description && <p className="text-xs text-navy-500 mt-0.5 line-clamp-2">{mod.description}</p>}
                   <p className="text-xs text-navy-400 mt-0.5">
                     {mod.topics.length === 0
@@ -214,7 +236,14 @@ export function CurriculumTrackEditor({ trackId }: { trackId: string }) {
               </div>
             )}
             {expandedModuleId === mod.id && editingModuleId !== mod.id && (
-              <ModuleDetail moduleId={mod.id} trackId={trackId} module={mod} onChanged={invalidate} />
+              <ModuleDetail
+                moduleId={mod.id}
+                trackId={trackId}
+                module={mod}
+                onChanged={invalidate}
+                draft={topicDrafts[mod.id] ?? EMPTY_DRAFT}
+                onDraftChange={(next) => setTopicDrafts((prev) => ({ ...prev, [mod.id]: next }))}
+              />
             )}
           </Card>
         ))}
@@ -336,17 +365,24 @@ function ModuleDetail({
   moduleId,
   module: mod,
   onChanged,
+  draft,
+  onDraftChange,
 }: {
   moduleId: string;
   trackId: string;
   module: Module;
   onChanged: () => void;
+  draft: TopicDraft;
+  onDraftChange: (next: TopicDraft) => void;
 }) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [durationSeconds, setDurationSeconds] = useState(600);
-  const [videoUrl, setVideoUrl] = useState('');
-  const [tools, setTools] = useState('');
+  // Draft lives in the parent so it survives this component unmounting.
+  const { title, description, durationSeconds, videoUrl, tools } = draft;
+  const patch = (fields: Partial<TopicDraft>) => onDraftChange({ ...draft, ...fields });
+  const setTitle = (v: string) => patch({ title: v });
+  const setDescription = (v: string) => patch({ description: v });
+  const setDurationSeconds = (v: number) => patch({ durationSeconds: v });
+  const setVideoUrl = (v: string) => patch({ videoUrl: v });
+  const setTools = (v: string) => patch({ tools: v });
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [previewTopicId, setPreviewTopicId] = useState<string | null>(null);
   const [addTopicError, setAddTopicError] = useState<string | null>(null);
@@ -368,11 +404,7 @@ function ModuleDetail({
       if (created?.id) setPreviewTopicId(created.id);
       setJustSavedTitle(title.trim());
       setAddTopicError(null);
-      setTitle('');
-      setDescription('');
-      setVideoUrl('');
-      setTools('');
-      setDurationSeconds(600);
+      onDraftChange(EMPTY_DRAFT);
     },
     onError: (e) => {
       setJustSavedTitle(null);
