@@ -14,8 +14,18 @@ const ALLOWED_DOCUMENT_TYPES = [
   'application/zip',
   'text/plain',
   'application/json',
+  // Images — course covers and evidence screenshots. SVG is deliberately excluded:
+  // it can carry script and is served from a public bucket.
   'image/png',
   'image/jpeg',
+  'image/jpg',
+  'image/webp',
+  'image/gif',
+  'image/avif',
+  'image/heic',
+  'image/heif',
+  'image/bmp',
+  'image/tiff',
 ];
 
 @Injectable()
