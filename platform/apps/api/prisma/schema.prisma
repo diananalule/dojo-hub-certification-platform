@@ -190,6 +190,8 @@ model Track {
   title         String
   description   String
   icon          String          @default("📘")
+  /// Uploaded cover photo. Null falls back to the generated illustration.
+  coverImageUrl String?
   categoryId    String
   category      Category        @relation(fields: [categoryId], references: [id])
   difficulty    TrackDifficulty

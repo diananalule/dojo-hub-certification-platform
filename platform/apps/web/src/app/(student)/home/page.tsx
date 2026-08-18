@@ -6,6 +6,7 @@ import { Search } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useCategories, useMyEnrollments, useTracks } from '@/lib/hooks';
 import { TrackCard } from '@/components/student/TrackCard';
+import { CourseCarousel } from '@/components/student/CourseCarousel';
 import { TrackCover } from '@/components/student/TrackCover';
 import { Card } from '@/components/ui/Card';
 import { SlidingTabs } from '@/components/ui/SlidingTabs';
@@ -64,8 +65,13 @@ export default function StudentHomePage() {
             {inProgress.map((e) => (
               <Link key={e.id} href={`/learning/${e.trackId}`}>
                 <Card hover className="flex overflow-hidden">
-                  <div className="w-32 shrink-0">
-                    <TrackCover category={e.track.category.name} icon={e.track.icon} className="h-full min-h-[7rem]" />
+                  <div className="w-32 shrink-0 bg-navy-100">
+                    {e.track.coverImageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- user-uploaded URL from object storage
+                      <img src={e.track.coverImageUrl} alt="" loading="lazy" className="w-full h-full min-h-[7rem] object-cover" />
+                    ) : (
+                      <TrackCover category={e.track.category.name} icon={e.track.icon} className="h-full min-h-[7rem]" />
+                    )}
                   </div>
                   <div className="p-4 flex-1 min-w-0">
                     <p className="text-[12px] font-mono uppercase text-crimson-600 font-bold tracking-wide">{e.track.difficulty} Level</p>
@@ -103,11 +109,19 @@ export default function StudentHomePage() {
 
         {!isLoading && filteredTracks.length === 0 && <p className="text-sm text-navy-400">No courses match your search.</p>}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {isLoading
-            ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-            : filteredTracks.map((t) => <TrackCard key={t.id} track={t} />)}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : (
+          <CourseCarousel>
+            {filteredTracks.map((t) => (
+              <div key={t.id} className="w-[16rem] sm:w-[17rem] shrink-0">
+                <TrackCard track={t} />
+              </div>
+            ))}
+          </CourseCarousel>
+        )}
       </div>
     </div>
   );

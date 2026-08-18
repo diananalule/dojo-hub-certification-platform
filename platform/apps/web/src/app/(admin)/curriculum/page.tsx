@@ -4,12 +4,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
-import { CategoryDto, TrackDifficulty, TrackSummaryDto } from '@dojo-hub/shared';
+import { CategoryDto, StoredFileKind, TrackDifficulty, TrackSummaryDto } from '@dojo-hub/shared';
 import { api, ApiError } from '@/lib/api-client';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { FileDropzone, type UploadedFile } from '@/components/student/FileDropzone';
 
 export default function CurriculumProgramsPage() {
   const queryClient = useQueryClient();
@@ -25,14 +26,18 @@ export default function CurriculumProgramsPage() {
   const [difficulty, setDifficulty] = useState<TrackDifficulty>('BEGINNER');
   const [durationWeeks, setDurationWeeks] = useState(8);
   const [icon, setIcon] = useState('📘');
+  // Cover photo is optional — an empty list leaves the generated illustration in place.
+  const [cover, setCover] = useState<UploadedFile[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const create = useMutation({
-    mutationFn: () => api.post('/tracks', { title, description, icon, categoryId, difficulty, durationWeeks }),
+    mutationFn: () =>
+      api.post('/tracks', { title, description, icon, categoryId, difficulty, durationWeeks, coverImageUrl: cover[0]?.url }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tracks'] });
       setTitle('');
       setDescription('');
+      setCover([]);
     },
     onError: (e) => setError(e instanceof ApiError ? e.message : 'Failed to create program.'),
   });
@@ -78,6 +83,12 @@ export default function CurriculumProgramsPage() {
             <input value={icon} onChange={(e) => setIcon(e.target.value)} className="input" />
           </Field>
         </div>
+        <Field label="Cover Photo (optional)">
+          <FileDropzone kind={StoredFileKind.DOCUMENT} accept="image/*" files={cover} onChange={setCover} noun="an image" />
+          <p className="mt-1 text-[12px] text-navy-400">
+            A real photo makes the course card far more inviting. Leave blank to keep the generated artwork.
+          </p>
+        </Field>
         <Field label="Syllabus Description">
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="input" placeholder="Objectives and requirements scope of the program..." />
         </Field>

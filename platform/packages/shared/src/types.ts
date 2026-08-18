@@ -92,6 +92,8 @@ export interface TrackDto {
   title: string;
   description: string;
   icon: string;
+  /** Uploaded cover photo; null falls back to the generated illustration. */
+  coverImageUrl: string | null;
   categoryId: string;
   category: CategoryDto;
   difficulty: TrackDifficulty;
@@ -107,6 +109,8 @@ export interface TrackSummaryDto {
   title: string;
   description: string;
   icon: string;
+  /** Uploaded cover photo; null falls back to the generated illustration. */
+  coverImageUrl: string | null;
   category: CategoryDto;
   difficulty: TrackDifficulty;
   durationWeeks: number;
@@ -129,6 +133,8 @@ export interface EnrolledTrackDto {
   title: string;
   description: string;
   icon: string;
+  /** Uploaded cover photo; null falls back to the generated illustration. */
+  coverImageUrl: string | null;
   category: CategoryDto;
   difficulty: TrackDifficulty;
   durationWeeks: number;

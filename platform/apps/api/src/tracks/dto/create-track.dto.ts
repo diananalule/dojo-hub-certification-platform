@@ -26,6 +26,12 @@ export class CreateTrackDto {
   @IsString()
   icon: string;
 
+  /** Optional cover photo URL from the upload flow; blank keeps the illustration. */
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  coverImageUrl?: string;
+
   @ApiProperty()
   @IsString()
   categoryId: string;

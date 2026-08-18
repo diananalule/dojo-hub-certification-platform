@@ -66,6 +66,7 @@ export class TracksService {
       title: track.title,
       description: track.description,
       icon: track.icon,
+      coverImageUrl: track.coverImageUrl,
       category: track.category,
       difficulty: track.difficulty,
       durationWeeks: track.durationWeeks,

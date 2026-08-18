@@ -60,6 +60,7 @@ export class EnrollmentsService {
           title: e.track.title,
           description: e.track.description,
           icon: e.track.icon,
+          coverImageUrl: e.track.coverImageUrl,
           category: e.track.category,
           difficulty: e.track.difficulty,
           durationWeeks: e.track.durationWeeks,

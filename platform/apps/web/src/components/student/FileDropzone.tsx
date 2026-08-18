@@ -6,7 +6,7 @@ import { StoredFileKind } from '@dojo-hub/shared';
 import { ApiError } from '@/lib/api-client';
 import { uploadFile } from '@/lib/upload';
 
-interface UploadedFile {
+export interface UploadedFile {
   id: string;
   originalName: string;
   sizeBytes: number;
@@ -26,11 +26,14 @@ export function FileDropzone({
   accept,
   files,
   onChange,
+  noun,
 }: {
   kind: StoredFileKind;
   accept: string;
   files: UploadedFile[];
   onChange: (files: UploadedFile[]) => void;
+  /** What the user is uploading, e.g. "image". Defaults from `kind`. */
+  noun?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState<number | null>(null);
@@ -91,7 +94,9 @@ export function FileDropzone({
           </div>
         ) : (
           <>
-            <p className="text-xs text-navy-600">Drop a {kind === 'VIDEO' ? 'video' : 'document'} here or click to browse</p>
+            <p className="text-xs text-navy-600">
+              Drop {noun ?? (kind === 'VIDEO' ? 'a video' : 'a document')} here or click to browse
+            </p>
             <p className="text-[13px] text-navy-400 mt-0.5">Up to 250 MB</p>
           </>
         )}
