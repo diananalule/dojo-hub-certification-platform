@@ -12,6 +12,7 @@ import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import DojoHubLogo from '@/components/DojoHubLogo';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 const schema = z.object({
   name: z.string().min(2, 'Enter your full name'),
@@ -60,7 +61,7 @@ export default function RegisterPage() {
         <div className="space-y-1.5">
           <label className="text-xs font-mono uppercase tracking-wider font-bold text-navy-500 block">Full Name</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 pointer-events-none">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-navy-400 pointer-events-none">
               <User className="w-[18px] h-[18px]" />
             </span>
             <input type="text" {...register('name')} className="input input-icon bg-navy-50" placeholder="e.g. Diana Nalule" />
@@ -71,7 +72,7 @@ export default function RegisterPage() {
         <div className="space-y-1.5">
           <label className="text-xs font-mono uppercase tracking-wider font-bold text-navy-500 block">Email Address</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 pointer-events-none">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-navy-400 pointer-events-none">
               <Mail className="w-[18px] h-[18px]" />
             </span>
             <input type="email" {...register('email')} className="input input-icon bg-navy-50" placeholder="e.g. diana.nalule@dojo.edu" />
@@ -99,10 +100,10 @@ export default function RegisterPage() {
         <div className="space-y-1.5">
           <label className="text-xs font-mono uppercase tracking-wider font-bold text-navy-500 block">Password</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 pointer-events-none">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-navy-400 pointer-events-none">
               <Lock className="w-[18px] h-[18px]" />
             </span>
-            <input type="password" {...register('password')} className="input input-icon bg-navy-50" placeholder="Minimum 8 characters" />
+            <PasswordInput {...register('password')} className="input input-icon bg-navy-50" placeholder="Minimum 8 characters" />
           </div>
           {errors.password && <p className="text-xs text-crimson-600">{errors.password.message}</p>}
         </div>

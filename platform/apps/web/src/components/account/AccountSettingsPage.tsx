@@ -8,6 +8,7 @@ import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PasswordInput } from '../ui/PasswordInput';
 import { Badge } from '@/components/ui/Badge';
 
 const ROLE_STATUS: Record<UserRole, string> = {
@@ -121,8 +122,7 @@ export function AccountSettingsPage() {
         <div className="space-y-4">
           <div>
             <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">Current Password</label>
-            <input
-              type="password"
+            <PasswordInput
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               className="input"
@@ -132,8 +132,7 @@ export function AccountSettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">New Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="input"
@@ -142,8 +141,7 @@ export function AccountSettingsPage() {
             </div>
             <div>
               <label className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 block mb-1.5">Confirm New Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="input"
