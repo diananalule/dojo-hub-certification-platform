@@ -27,6 +27,8 @@ function CategoriesPanel() {
   const queryClient = useQueryClient();
   const { data: categories = [] } = useQuery<CategoryDto[]>({ queryKey: ['categories'], queryFn: () => api.get<CategoryDto[]>('/categories') });
   const [name, setName] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const create = useMutation({
@@ -37,10 +39,26 @@ function CategoriesPanel() {
     },
     onError: (e) => setError(e instanceof ApiError ? e.message : 'Failed to create category.'),
   });
+  // Renaming is allowed on every category, including defaults — only delete is blocked.
+  const rename = useMutation({
+    mutationFn: ({ id, newName }: { id: string; newName: string }) => api.patch(`/categories/${id}`, { name: newName }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      // Course rows and filters read the category name, so refresh those too.
+      queryClient.invalidateQueries({ queryKey: ['tracks'] });
+      setEditingId(null);
+      setError(null);
+    },
+    onError: (e) => setError(e instanceof ApiError ? e.message : 'Failed to rename category.'),
+  });
+
   const remove = useMutation({
     mutationFn: (id: string) => api.delete(`/categories/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
-    onError: (e) => alert(e instanceof ApiError ? e.message : 'Failed to delete category.'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      setError(null);
+    },
+    onError: (e) => setError(e instanceof ApiError ? e.message : 'Failed to delete category.'),
   });
 
   return (
@@ -70,14 +88,56 @@ function CategoriesPanel() {
       </div>
       <div className="space-y-2">
         {categories.map((c) => (
-          <div key={c.id} className="flex items-center justify-between bg-navy-50 rounded-lg px-3 py-2">
-            <span className="text-sm text-navy-950 font-medium">
-              {c.name} {c.isDefault && <span className="text-[12px] text-navy-400 ml-1">(default)</span>}
-            </span>
-            {!c.isDefault && (
-              <button onClick={() => remove.mutate(c.id)} aria-label={`Delete category "${c.name}"`} className="text-navy-400 hover:text-crimson-600">
-                <Trash2 className="w-4 h-4" />
-              </button>
+          <div key={c.id} className="flex items-center justify-between gap-2 bg-navy-50 rounded-lg px-3 py-2">
+            {editingId === c.id ? (
+              <>
+                <input
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && editingName.trim().length >= 2) rename.mutate({ id: c.id, newName: editingName.trim() });
+                    if (e.key === 'Escape') setEditingId(null);
+                  }}
+                  aria-label={`Rename category "${c.name}"`}
+                  autoFocus
+                  className="input flex-1 py-1.5"
+                />
+                <Button
+                  size="sm"
+                  disabled={editingName.trim().length < 2}
+                  loading={rename.isPending}
+                  onClick={() => rename.mutate({ id: c.id, newName: editingName.trim() })}
+                >
+                  Save
+                </Button>
+                <button onClick={() => setEditingId(null)} aria-label="Cancel renaming category" className="text-navy-400 hover:text-navy-800">
+                  <X className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="text-sm text-navy-950 font-medium min-w-0 truncate">
+                  {c.name} {c.isDefault && <span className="text-[12px] text-navy-400 ml-1">(default)</span>}
+                </span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    onClick={() => {
+                      setEditingId(c.id);
+                      setEditingName(c.name);
+                      setError(null);
+                    }}
+                    aria-label={`Rename category "${c.name}"`}
+                    className="text-navy-400 hover:text-navy-800"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  {!c.isDefault && (
+                    <button onClick={() => remove.mutate(c.id)} aria-label={`Delete category "${c.name}"`} className="text-navy-400 hover:text-crimson-600">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </>
             )}
           </div>
         ))}
