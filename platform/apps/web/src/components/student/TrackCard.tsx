@@ -77,7 +77,7 @@ export function TrackCard({ track }: { track: TrackSummaryDto }) {
             <Badge tone="red">{track.category.name}</Badge>
             <Badge tone="gray">{track.difficulty}</Badge>
           </div>
-          <h4 className="font-bold text-sm text-navy-950 group-hover:text-crimson-600 transition-colors duration-300 line-clamp-2 min-h-[2.6em]">
+          <h4 className="font-bold text-sm text-navy-950 group-hover:text-crimson-600 transition-colors duration-300 line-clamp-2 min-h-[2.8rem]">
             {track.title}
           </h4>
           <p className="mt-auto flex items-center gap-3 text-[12px] font-mono text-navy-400 uppercase tracking-wide pt-0.5">
