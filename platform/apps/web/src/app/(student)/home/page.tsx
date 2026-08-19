@@ -6,7 +6,8 @@ import { Search } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useCategories, useMyEnrollments, useTracks } from '@/lib/hooks';
 import { TrackCard } from '@/components/student/TrackCard';
-import { CourseCarousel } from '@/components/student/CourseCarousel';
+import { CategoryRow } from '@/components/student/CategoryRow';
+import { DashboardFooter } from '@/components/student/DashboardFooter';
 import { TrackCover } from '@/components/student/TrackCover';
 import { Card } from '@/components/ui/Card';
 import { SlidingTabs } from '@/components/ui/SlidingTabs';
@@ -33,6 +34,14 @@ export default function StudentHomePage() {
       return matchesCategory && matchesQuery;
     });
   }, [tracks, selectedCategory, query]);
+
+  // One row per category. The tabs narrow which rows appear; "All" shows them all.
+  const rows = useMemo(() => {
+    const visible = selectedCategory === ALL_CATEGORY ? categories : categories.filter((c) => c.id === selectedCategory);
+    return visible
+      .map((c) => ({ category: c, tracks: filteredTracks.filter((t) => t.category.id === c.id) }))
+      .filter((row) => row.tracks.length > 0);
+  }, [categories, selectedCategory, filteredTracks]);
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -114,15 +123,20 @@ export default function StudentHomePage() {
             {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : (
-          <CourseCarousel>
-            {filteredTracks.map((t) => (
-              <div key={t.id} className="w-[16rem] sm:w-[17rem] shrink-0">
-                <TrackCard track={t} />
-              </div>
+          <div className="space-y-8">
+            {rows.map((row) => (
+              <CategoryRow
+                key={row.category.id}
+                categoryId={row.category.id}
+                categoryName={row.category.name}
+                tracks={row.tracks}
+              />
             ))}
-          </CourseCarousel>
+          </div>
         )}
       </div>
+
+      <DashboardFooter />
     </div>
   );
 }
