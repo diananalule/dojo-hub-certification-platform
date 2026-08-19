@@ -45,10 +45,10 @@ export function TrackCard({ track }: { track: TrackSummaryDto }) {
   };
 
   return (
-    <div ref={cardRef} className="relative" onMouseEnter={open} onMouseLeave={close}>
+    <div ref={cardRef} className="relative h-full" onMouseEnter={open} onMouseLeave={close}>
       <Link
         href={`/learning/${track.id}`}
-        className="card-lift block bg-white rounded-2xl border border-black/[0.06] overflow-hidden shadow-[0_1px_2px_rgba(5,7,12,0.04)] group h-full"
+        className="card-lift flex flex-col bg-white rounded-2xl border border-black/[0.06] overflow-hidden shadow-[0_1px_2px_rgba(5,7,12,0.04)] group h-full"
       >
         <div className="relative aspect-[16/9] overflow-hidden bg-navy-100">
           {track.coverImageUrl ? (
@@ -72,15 +72,15 @@ export function TrackCard({ track }: { track: TrackSummaryDto }) {
           </div>
         </div>
 
-        <div className="p-4 space-y-2">
+        <div className="flex flex-1 flex-col p-4 space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
             <Badge tone="red">{track.category.name}</Badge>
             <Badge tone="gray">{track.difficulty}</Badge>
           </div>
-          <h4 className="font-bold text-sm text-navy-950 group-hover:text-crimson-600 transition-colors duration-300 line-clamp-2">
+          <h4 className="font-bold text-sm text-navy-950 group-hover:text-crimson-600 transition-colors duration-300 line-clamp-2 min-h-[2.6em]">
             {track.title}
           </h4>
-          <p className="flex items-center gap-3 text-[12px] font-mono text-navy-400 uppercase tracking-wide pt-0.5">
+          <p className="mt-auto flex items-center gap-3 text-[12px] font-mono text-navy-400 uppercase tracking-wide pt-0.5">
             <span className="flex items-center gap-1">
               <Layers className="w-3 h-3" />
               {track.moduleCount} module{track.moduleCount === 1 ? '' : 's'}
