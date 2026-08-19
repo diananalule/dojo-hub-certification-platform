@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useEffect, useId } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from './cn';
 
@@ -30,9 +31,27 @@ export function Modal({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [open, onClose]);
 
+  // Stop the page behind scrolling while the dialog is open, so a scroll gesture
+  // acts on the dialog rather than sliding the content underneath it.
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
   if (!open) return null;
 
-  return (
+  /*
+   * Portalled to <body>. Pages wrap their content in `animate-fadeIn`, which ends on
+   * `transform: translateY(0)` with fill-mode forwards — and a transformed ancestor
+   * becomes the containing block for `position: fixed` children. Rendered in place,
+   * this overlay anchored to that wrapper instead of the viewport, so on a long page
+   * the dialog opened far below the fold and had to be scrolled to.
+   */
+  return createPortal(
     <div className="fixed inset-0 bg-navy-950/70 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div
         role="dialog"
@@ -60,6 +79,7 @@ export function Modal({
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
