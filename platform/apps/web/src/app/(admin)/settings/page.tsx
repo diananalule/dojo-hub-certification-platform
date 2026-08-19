@@ -117,7 +117,7 @@ function CategoriesPanel() {
             ) : (
               <>
                 <span className="text-sm text-navy-950 font-medium min-w-0 truncate">
-                  {c.name} {c.isDefault && <span className="text-[12px] text-navy-400 ml-1">(default)</span>}
+                  {c.name}
                 </span>
                 <div className="flex items-center gap-3 shrink-0">
                   <button
@@ -131,11 +131,13 @@ function CategoriesPanel() {
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
-                  {!c.isDefault && (
-                    <button onClick={() => remove.mutate(c.id)} aria-label={`Delete category "${c.name}"`} className="text-navy-400 hover:text-crimson-600">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => remove.mutate(c.id)}
+                    aria-label={`Delete category "${c.name}"`}
+                    className="text-navy-400 hover:text-crimson-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </>
             )}

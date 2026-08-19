@@ -33,10 +33,13 @@ export class CategoriesService {
   }
 
   async remove(id: string) {
-    const category = await this.findById(id);
-    if (category.isDefault) {
-      throw new BadRequestException('Default categories cannot be deleted.');
-    }
+    await this.findById(id);
+    /*
+     * `isDefault` no longer blocks deletion. The seed re-creates its categories by
+     * name, so renaming one leaves a fresh empty duplicate behind that an admin
+     * previously had no way to clear. The check below is the meaningful protection:
+     * a category in use by any track still cannot be removed.
+     */
     const tracksUsingIt = await this.prisma.track.count({
       where: { categoryId: id },
     });
