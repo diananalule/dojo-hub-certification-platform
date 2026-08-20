@@ -10,6 +10,7 @@ import {
   NotificationType,
   UserRole,
 } from '@dojo-hub/shared';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -232,5 +233,37 @@ export class UsersService {
     }
 
     return result;
+  }
+
+  /**
+   * Sets a new password on behalf of a user. There is no self-service reset yet, so
+   * this is the only recovery path when someone mistypes their password at signup.
+   *
+   * Every existing session is revoked: a password change must invalidate anyone
+   * already holding a refresh token for that account.
+   */
+  async adminResetPassword(actor: RequestUser, userId: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found.');
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: userId }, data: { passwordHash } }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId, revoked: false },
+        data: { revoked: true },
+      }),
+    ]);
+
+    await this.auditService.log({
+      actor,
+      action: `Reset the password for "${user.name}" (${user.email})`,
+      entityType: 'User',
+      entityId: userId,
+      severity: AuditLogSeverity.WARNING,
+    });
+
+    return { success: true };
   }
 }

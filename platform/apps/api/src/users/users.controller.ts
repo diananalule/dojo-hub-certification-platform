@@ -1,10 +1,11 @@
-import { Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UserRole } from '@dojo-hub/shared';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequestUser } from '../common/types/request-user.interface';
 import { UsersService } from './users.service';
+import { AdminResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -28,6 +29,17 @@ export class UsersController {
   @Patch(':id/reactivate')
   reactivate(@CurrentUser() actor: RequestUser, @Param('id') id: string) {
     return this.usersService.reactivate(actor, id);
+  }
+
+  /** Recovery path for a user who cannot sign in — no self-service reset exists yet. */
+  @Roles(UserRole.ADMIN)
+  @Patch(':id/password')
+  resetPassword(
+    @CurrentUser() actor: RequestUser,
+    @Param('id') id: string,
+    @Body() dto: AdminResetPasswordDto,
+  ) {
+    return this.usersService.adminResetPassword(actor, id, dto.newPassword);
   }
 
   @Roles(UserRole.ADMIN)

@@ -46,6 +46,15 @@ export default function AdminUsersPage() {
     mutationFn: (id: string) => api.patch(`/users/${id}/reactivate`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users', 'directory'] }),
   });
+  // No self-service reset exists yet, so an admin setting a password is the only
+  // recovery route for someone locked out of their account.
+  const resetPassword = useMutation({
+    mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) =>
+      api.patch(`/users/${id}/password`, { newPassword }),
+    onSuccess: () => alert('Password updated. Give the new password to the user — they can change it later under Profile & Settings.'),
+    onError: (e) => alert(e instanceof ApiError ? e.message : 'Failed to reset password.'),
+  });
+
   const terminate = useMutation({
     mutationFn: (id: string) => api.post(`/users/${id}/terminate`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users', 'directory'] }),
@@ -139,6 +148,26 @@ export default function AdminUsersPage() {
                         Reactivate
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      loading={resetPassword.isPending}
+                      onClick={() => {
+                        const newPassword = prompt(
+                          `Set a new password for ${u.name} (${u.email}).
+
+Minimum 8 characters. Share it with them directly — it is not emailed.`,
+                        );
+                        if (newPassword === null) return;
+                        if (newPassword.trim().length < 8) {
+                          alert('Password must be at least 8 characters.');
+                          return;
+                        }
+                        resetPassword.mutate({ id: u.id, newPassword: newPassword.trim() });
+                      }}
+                    >
+                      Reset Password
+                    </Button>
                     <Button
                       size="sm"
                       variant="danger"
