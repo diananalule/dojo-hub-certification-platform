@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,14 +22,27 @@ type FormValues = z.infer<typeof schema>;
 const ROLE_HOME: Record<string, string> = { STUDENT: '/home', EVALUATOR: '/queue', ADMIN: '/metrics' };
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
+  const params = useSearchParams();
+  // Set when arriving straight from registration, so we can confirm the account was
+  // created and save them retyping the address.
+  const justRegistered = params.get('registered') === '1';
+  const prefillEmail = params.get('email') ?? '';
   const [error, setError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { email: prefillEmail } });
 
   const onSubmit = async (values: FormValues) => {
     setError(null);
@@ -53,6 +66,12 @@ export default function LoginPage() {
         <h2 className="text-2xl sm:text-3xl font-extrabold text-navy-950 tracking-tight">Sign In to Dojo Hub</h2>
         <p className="text-sm text-navy-500 max-w-xs mx-auto">Enter your credentials to access your secure workspace</p>
       </div>
+
+      {justRegistered && !error && (
+        <div className="p-3.5 bg-green-50 border border-green-200 text-green-800 rounded-xl text-sm font-medium animate-fadeIn">
+          Account created. Sign in below to get started.
+        </div>
+      )}
 
       {error && <div className="p-3.5 bg-crimson-50 border border-crimson-200 text-crimson-700 rounded-xl text-sm font-medium animate-fadeIn">{error}</div>}
 

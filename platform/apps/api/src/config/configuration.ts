@@ -1,4 +1,9 @@
 export default () => ({
+  email: {
+    apiKey: process.env.RESEND_API_KEY ?? '',
+    from: process.env.EMAIL_FROM ?? 'Dojo Hub <noreply@dojohubug.com>',
+  },
+
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: parseInt(process.env.PORT ?? '4000', 10),
   appUrl: process.env.APP_URL!,

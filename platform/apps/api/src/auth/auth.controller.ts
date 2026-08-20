@@ -33,19 +33,16 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
+  /*
+   * Registration deliberately does NOT start a session. A new account signs in
+   * explicitly afterwards, which keeps one clear entry point into the platform and
+   * is the behaviour email verification will build on — an unverified account must
+   * not be able to slip straight in.
+   */
   @Public()
   @Post('register')
-  async register(
-    @Body() dto: RegisterDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async register(@Body() dto: RegisterDto) {
     const session = await this.authService.register(dto);
-    this.setSessionCookies(
-      res,
-      session.accessToken,
-      session.refreshToken,
-      session.refreshTtlMs,
-    );
     return { user: session.user };
   }
 

@@ -60,14 +60,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [loginMutation, queryClient],
   );
 
+  /**
+   * Creates the account only. Registration no longer starts a session, so nothing is
+   * written to the ['me'] cache — the caller sends the user to the sign-in page.
+   */
   const register = useCallback(
     async (name: string, email: string, password: string, role: UserRole) => {
       const { user } = await registerMutation.mutateAsync({ name, email, password, role });
-      queryClient.setQueryData(['me'], user);
-      await queryClient.invalidateQueries();
       return user;
     },
-    [registerMutation, queryClient],
+    [registerMutation],
   );
 
   const logout = useCallback(async () => {

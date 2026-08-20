@@ -71,6 +71,15 @@ class EnvVars {
   @IsString()
   S3_PUBLIC_URL: string;
 
+  /** Email. Absent in local dev — sends are skipped and logged rather than failing. */
+  @IsString()
+  @IsOptional()
+  RESEND_API_KEY: string = '';
+
+  @IsString()
+  @IsOptional()
+  EMAIL_FROM: string = 'Dojo Hub <noreply@dojohubug.com>';
+
   @IsString()
   @IsOptional()
   ANTHROPIC_API_KEY: string = '';

@@ -9,6 +9,7 @@ import { AppController } from './app.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuditModule } from './audit/audit.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { EmailModule } from './email/email.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { LevelsModule } from './levels/levels.module';
@@ -37,6 +38,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
       load: [configuration],
       validate: validateEnv,
     }),
+    EmailModule,
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60_000, limit: 120 }],
     }),

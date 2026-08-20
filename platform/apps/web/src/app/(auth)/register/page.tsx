@@ -35,8 +35,9 @@ export default function RegisterPage() {
   const onSubmit = async (values: FormValues) => {
     setError(null);
     try {
-      const user = await registerUser(values.name, values.email, values.password, values.role);
-      router.replace(user.role === 'EVALUATOR' ? '/queue' : '/home');
+      await registerUser(values.name, values.email, values.password, values.role);
+      // Account created but not signed in — send them to sign in explicitly.
+      router.replace(`/login?registered=1&email=${encodeURIComponent(values.email)}`);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Something went wrong. Please try again.');
     }
