@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { ApiError } from '@/lib/api-client';
+import { api, ApiError } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import DojoHubLogo from '@/components/DojoHubLogo';
 import { PasswordInput } from '@/components/ui/PasswordInput';
@@ -38,14 +38,30 @@ function LoginForm() {
   const justRegistered = params.get('registered') === '1';
   const prefillEmail = params.get('email') ?? '';
   const [error, setError] = useState<string | null>(null);
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle');
+  // Only this specific failure is recoverable by re-sending a link.
+  const needsVerification = Boolean(error && /confirm your email/i.test(error));
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { email: prefillEmail } });
 
+  const handleResend = async () => {
+    setResendState('sending');
+    try {
+      await api.post('/auth/resend-verification', { email: getValues('email') });
+    } catch {
+      // The endpoint always reports success; treat any transport error as sent too,
+      // so this never reveals whether an address has an account.
+    }
+    setResendState('sent');
+  };
+
   const onSubmit = async (values: FormValues) => {
     setError(null);
+    setResendState('idle');
     try {
       const user = await login(values.email, values.password);
       router.replace(ROLE_HOME[user.role] ?? '/home');
@@ -69,11 +85,28 @@ function LoginForm() {
 
       {justRegistered && !error && (
         <div className="p-3.5 bg-green-50 border border-green-200 text-green-800 rounded-xl text-sm font-medium animate-fadeIn">
-          Account created. Sign in below to get started.
+          Account created. Check your email for a confirmation link — you&apos;ll need it before you can sign in.
         </div>
       )}
 
-      {error && <div className="p-3.5 bg-crimson-50 border border-crimson-200 text-crimson-700 rounded-xl text-sm font-medium animate-fadeIn">{error}</div>}
+      {error && (
+        <div className="p-3.5 bg-crimson-50 border border-crimson-200 text-crimson-700 rounded-xl text-sm font-medium animate-fadeIn space-y-2">
+          <p>{error}</p>
+          {needsVerification && (
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resendState === 'sending'}
+              className="underline font-bold hover:text-crimson-900 disabled:opacity-60"
+            >
+              {resendState === 'sending' ? 'Sending…' : 'Send me a new confirmation link'}
+            </button>
+          )}
+          {resendState === 'sent' && (
+            <p className="text-green-700">Sent. Check your inbox for the new link.</p>
+          )}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-1.5">

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -6,10 +7,11 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash, randomUUID } from 'crypto';
 import { AccountStatus, AuditLogSeverity, UserRole } from '@dojo-hub/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { EmailService } from '../email/email.service';
 import { RequestUser } from '../common/types/request-user.interface';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -25,7 +27,57 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly auditService: AuditService,
+    private readonly emailService: EmailService,
   ) {}
+
+  /** Sends (or re-sends) the confirmation link for an unverified account. */
+  private async sendVerificationEmail(email: string, name: string, token: string) {
+    const web = this.configService.get<string>('webUrl') ?? 'https://dojo-hub-web.onrender.com';
+    await this.emailService.send({
+      to: email,
+      subject: 'Confirm your Dojo Hub email address',
+      block: {
+        heading: `Welcome to Dojo Hub, ${name.split(' ')[0]}`,
+        intro:
+          'Confirm your email address to activate your account. You will not be able to sign in until you do.',
+        ctaLabel: 'Confirm my email address',
+        ctaUrl: `${web}/verify-email?token=${token}`,
+        outro: 'If you did not create a Dojo Hub account, you can ignore this email.',
+      },
+    });
+  }
+
+  /** Redeems a verification token. Single-use: the token is cleared on success. */
+  async verifyEmail(token: string) {
+    const user = await this.prisma.user.findUnique({ where: { verificationToken: token } });
+    if (!user) {
+      throw new BadRequestException('This confirmation link is invalid or has already been used.');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerifiedAt: new Date(), verificationToken: null },
+    });
+
+    return { success: true, email: user.email };
+  }
+
+  /**
+   * Issues a fresh link. Always reports success, so this cannot be used to discover
+   * which addresses have accounts.
+   */
+  async resendVerification(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    if (user && !user.emailVerifiedAt) {
+      const verificationToken = randomUUID();
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { verificationToken, verificationSentAt: new Date() },
+      });
+      await this.sendVerificationEmail(user.email, user.name, verificationToken);
+    }
+    return { success: true };
+  }
 
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({
@@ -38,6 +90,8 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    // Single-use, unguessable token delivered by email; cleared once redeemed.
+    const verificationToken = randomUUID();
 
     const user = await this.prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
@@ -47,6 +101,8 @@ export class AuthService {
           passwordHash,
           role: dto.role,
           status: AccountStatus.ACTIVE,
+          verificationToken,
+          verificationSentAt: new Date(),
         },
       });
 
@@ -64,6 +120,8 @@ export class AuthService {
 
       return created;
     });
+
+    await this.sendVerificationEmail(user.email, user.name, verificationToken);
 
     await this.auditService.log({
       actor: this.toRequestUser(user),
@@ -88,6 +146,12 @@ export class AuthService {
     if (user.status === AccountStatus.SUSPENDED) {
       throw new UnauthorizedException(
         'This account has been suspended. Contact a platform administrator.',
+      );
+    }
+
+    if (!user.emailVerifiedAt) {
+      throw new UnauthorizedException(
+        'Please confirm your email address first. Check your inbox for the verification link, or request a new one.',
       );
     }
 

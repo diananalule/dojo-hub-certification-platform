@@ -20,6 +20,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto';
 
 function getCookie(req: Request, name: string): string | undefined {
   return (req.cookies as Record<string, string> | undefined)?.[name];
@@ -44,6 +45,20 @@ export class AuthController {
   async register(@Body() dto: RegisterDto) {
     const session = await this.authService.register(dto);
     return { user: session.user };
+  }
+
+  @Public()
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.authService.verifyEmail(dto.token);
+  }
+
+  @Public()
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.authService.resendVerification(dto.email);
   }
 
   @Public()

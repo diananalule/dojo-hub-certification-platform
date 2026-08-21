@@ -113,6 +113,13 @@ model User {
   name         String
   email        String        @unique
   passwordHash String
+  /// Null until the address is confirmed. Login is refused while null.
+  emailVerifiedAt   DateTime?
+  /// Single-use token from the verification email; cleared once used.
+  verificationToken String?   @unique
+  verificationSentAt DateTime?
+  /// Opt-out for non-transactional email (new course announcements). On by default.
+  emailNotifications Boolean  @default(true)
   role         UserRole
   status       AccountStatus @default(ACTIVE)
   createdAt    DateTime      @default(now())
