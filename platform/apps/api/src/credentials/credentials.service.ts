@@ -18,6 +18,8 @@ import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RequestUser } from '../common/types/request-user.interface';
 
+const WEB = process.env.WEB_URL ?? 'https://dojo-hub-web.onrender.com';
+
 @Injectable()
 export class CredentialsService {
   constructor(
@@ -50,6 +52,22 @@ export class CredentialsService {
       type: NotificationType.CREDENTIAL_ISSUED,
       title: `Your ${credential.level.name} credential has been issued!`,
       body: 'Your new certification is now available in My Certificates, cryptographically signed and ready to verify.',
+      email: {
+        subject: `Your ${credential.level.name} certificate is ready`,
+        block: {
+          heading: 'Congratulations — your certificate has been issued',
+          intro:
+            `Your capstone was approved and your ${credential.level.name} certificate is now available. ` +
+            'It carries a QR code that anyone can scan to verify it, without needing an account.',
+          facts: [
+            { label: 'Level', value: credential.level.name },
+            { label: 'Issued', value: new Date(credential.issuedAt).toDateString() },
+          ],
+          ctaLabel: 'View and download your certificate',
+          ctaUrl: `${WEB}/certificates`,
+          outro: 'You can download it as a PDF to share or print.',
+        },
+      },
     });
 
     return credential;

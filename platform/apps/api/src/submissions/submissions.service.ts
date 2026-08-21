@@ -22,6 +22,8 @@ import { RequestUser } from '../common/types/request-user.interface';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { GradeSubmissionDto } from './dto/grade-submission.dto';
 
+const WEB = process.env.WEB_URL ?? 'https://dojo-hub-web.onrender.com';
+
 const FULL_INCLUDE = {
   files: true,
   rubricChecks: true,
@@ -174,17 +176,54 @@ export class SubmissionsService {
       }),
     ]);
 
+    const studentName = student?.name ?? 'A student';
+
     await Promise.all(
       reviewers.map((reviewer) =>
         this.notificationsService.notify({
           userId: reviewer.id,
           type: NotificationType.SUBMISSION_RECEIVED,
           title: 'New submission awaiting review',
-          body: `${student?.name ?? 'A student'} submitted "${submissionTitle}" for review.`,
+          body: `${studentName} submitted "${submissionTitle}" for review.`,
           metadata: { submissionId },
+          email: {
+            subject: `New submission to review: ${submissionTitle}`,
+            block: {
+              heading: 'A submission is waiting for your review',
+              intro: `${studentName} has submitted work for assessment. It is now in your grading queue.`,
+              facts: [
+                { label: 'Student', value: studentName },
+                { label: 'Submission', value: submissionTitle },
+              ],
+              ctaLabel: 'Open the grading queue',
+              ctaUrl: `${WEB}/queue`,
+              outro: 'Work through the competency rubric before approving — every item must be checked.',
+            },
+          },
         }),
       ),
     );
+
+    // The student gets their own confirmation that the work actually landed.
+    await this.notificationsService.notify({
+      userId: actor.id,
+      type: NotificationType.SUBMISSION_RECEIVED,
+      title: 'Submission received',
+      body: `We received "${submissionTitle}". A supervisor will review it shortly.`,
+      metadata: { submissionId },
+      email: {
+        subject: `We received your submission: ${submissionTitle}`,
+        block: {
+          heading: 'Your submission was received',
+          intro:
+            'Thanks — your work is now with a supervisor for assessment. You will be emailed as soon as it has been reviewed.',
+          facts: [{ label: 'Submission', value: submissionTitle }],
+          ctaLabel: 'View your learning',
+          ctaUrl: `${WEB}/learning`,
+          outro: 'No action is needed from you right now.',
+        },
+      },
+    });
   }
 
   async queue(status?: SubmissionStatus) {
@@ -381,14 +420,35 @@ export class SubmissionsService {
       levelUp = advanceResult.leveledUp;
     }
 
+    const approved = dto.decision === 'APPROVE';
+
     await this.notificationsService.notify({
       userId: submission.studentId,
       type: NotificationType.SUBMISSION_GRADED,
-      title:
-        dto.decision === 'APPROVE'
-          ? `"${submission.title}" was approved!`
-          : `"${submission.title}" needs revisions`,
+      title: approved
+        ? `"${submission.title}" was approved!`
+        : `"${submission.title}" needs revisions`,
       body: dto.feedback,
+      email: {
+        subject: approved
+          ? `Approved: ${submission.title}`
+          : `Revisions requested: ${submission.title}`,
+        block: {
+          heading: approved ? 'Your work was approved' : 'Your work needs revisions',
+          intro: approved
+            ? 'A supervisor has reviewed your submission and passed it.'
+            : 'A supervisor has reviewed your submission and asked for changes before it can pass.',
+          facts: [
+            { label: 'Submission', value: submission.title },
+            { label: 'Feedback', value: dto.feedback },
+          ],
+          ctaLabel: approved ? 'View your progress' : 'Review the feedback',
+          ctaUrl: `${WEB}/learning`,
+          outro: approved
+            ? undefined
+            : 'Update your work using the feedback above, then submit it again.',
+        },
+      },
     });
 
     return {
