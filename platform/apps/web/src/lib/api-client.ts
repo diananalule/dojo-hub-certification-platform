@@ -1,4 +1,11 @@
-const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}/api`;
+/*
+ * Empty by default: requests go to this app's own origin at /api, which Next rewrites
+ * to the API service (see next.config.ts). Keeping them same-origin is what makes the
+ * session cookie first-party, so it works on Safari/iOS and mobile Chrome.
+ *
+ * Set NEXT_PUBLIC_API_URL only to bypass the proxy and call the API directly.
+ */
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL ?? ''}/api`;
 
 export class ApiError extends Error {
   status: number;
