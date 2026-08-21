@@ -3,10 +3,16 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AuditLogSeverity, TrackStatus } from '@dojo-hub/shared';
+import {
+  AccountStatus,
+  AuditLogSeverity,
+  TrackStatus,
+  UserRole,
+} from '@dojo-hub/shared';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { EmailService } from '../email/email.service';
 import { RequestUser } from '../common/types/request-user.interface';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
@@ -40,6 +46,7 @@ export class TracksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly emailService: EmailService,
   ) {}
 
   async list(params: {
@@ -159,10 +166,18 @@ export class TracksService {
     // Modules are allowed to ship with just a title/description/tools and no
     // topics — topics are an optional deeper layer, not a publishing requirement.
 
+    const alreadyPublished = track.status === TrackStatus.PUBLISHED;
+
     const updated = await this.prisma.track.update({
       where: { id },
       data: { status: TrackStatus.PUBLISHED },
     });
+
+    // Announce only on the first publish — re-publishing after an edit must not
+    // email everyone again.
+    if (!alreadyPublished) {
+      void this.announceNewCourse(id);
+    }
 
     await this.auditService.log({
       actor,
@@ -396,5 +411,68 @@ export class TracksService {
           }
         : null,
     };
+  }
+
+  /**
+   * Emails students about a newly published course, limited to those who have
+   * enrolled in something in the same category — the "interested in this category"
+   * rule, inferred from enrolments rather than a setting students must maintain.
+   *
+   * Announcements are not transactional, so `emailNotifications` is honoured, and
+   * unverified addresses are skipped to protect sending reputation.
+   *
+   * Runs detached: publishing must not wait on, or fail because of, email.
+   */
+  private async announceNewCourse(trackId: string) {
+    try {
+      const track = await this.prisma.track.findUnique({
+        where: { id: trackId },
+        include: { category: true },
+      });
+      if (!track) return;
+
+      // Enrollment.userId has no relation back to User, so gather the ids first.
+      const enrolments = await this.prisma.enrollment.findMany({
+        where: { track: { categoryId: track.categoryId } },
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+      const studentIds = enrolments.map((e) => e.userId);
+      if (studentIds.length === 0) return;
+
+      const recipients = await this.prisma.user.findMany({
+        where: {
+          id: { in: studentIds },
+          role: UserRole.STUDENT,
+          status: AccountStatus.ACTIVE,
+          emailNotifications: true,
+          emailVerifiedAt: { not: null },
+        },
+        select: { email: true, name: true },
+      });
+
+      const web = process.env.WEB_URL ?? 'https://dojo-hub-web.onrender.com';
+
+      for (const student of recipients) {
+        await this.emailService.send({
+          to: student.email,
+          subject: `New ${track.category.name} course: ${track.title}`,
+          block: {
+            heading: 'A new course is available',
+            intro: `${track.title} has just been published in ${track.category.name} — a category you are already studying.`,
+            facts: [
+              { label: 'Course', value: track.title },
+              { label: 'Level', value: track.difficulty },
+              { label: 'Length', value: `${track.durationWeeks} weeks` },
+            ],
+            ctaLabel: 'View the course',
+            ctaUrl: `${web}/learning/${track.id}`,
+            outro: 'You can turn these announcements off under Profile & Settings.',
+          },
+        });
+      }
+    } catch {
+      // EmailService logs its own failures; never surface this to the publisher.
+    }
   }
 }

@@ -11,6 +11,8 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   status: 'ACTIVE' | 'SUSPENDED';
+  /** Opt-out for course announcements; transactional email is always sent. */
+  emailNotifications?: boolean;
   studentProfile?: {
     currentLevel: { id: string; name: string; order: number; passingScore: number };
   } | null;

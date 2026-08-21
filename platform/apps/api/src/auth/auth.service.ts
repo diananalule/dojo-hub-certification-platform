@@ -223,7 +223,12 @@ export class AuthService {
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const user = await this.prisma.user.update({
       where: { id: userId },
-      data: { name: dto.name.trim() },
+      data: {
+        name: dto.name.trim(),
+        ...(dto.emailNotifications === undefined
+          ? {}
+          : { emailNotifications: dto.emailNotifications }),
+      },
       include: { studentProfile: { include: { currentLevel: true } } },
     });
 

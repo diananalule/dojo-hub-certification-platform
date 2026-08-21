@@ -22,6 +22,8 @@ export function AccountSettingsPage() {
   const queryClient = useQueryClient();
 
   const [name, setName] = useState(user?.name ?? '');
+  // Announcements default on; transactional email is always sent regardless.
+  const [emailNotifications, setEmailNotifications] = useState(user?.emailNotifications ?? true);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSaved, setProfileSaved] = useState(false);
 
@@ -32,7 +34,7 @@ export function AccountSettingsPage() {
   const [passwordSaved, setPasswordSaved] = useState(false);
 
   const updateProfile = useMutation({
-    mutationFn: () => api.patch('/auth/me', { name: name.trim() }),
+    mutationFn: () => api.patch('/auth/me', { name: name.trim(), emailNotifications }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['me'] });
       setProfileSaved(true);
@@ -94,10 +96,28 @@ export function AccountSettingsPage() {
           </div>
         </div>
 
+        <div className="border-t border-navy-100 pt-4">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={emailNotifications}
+              onChange={(e) => setEmailNotifications(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-crimson-600 cursor-pointer"
+            />
+            <span>
+              <span className="text-sm font-semibold text-navy-950 block">Email me about new courses</span>
+              <span className="text-xs text-navy-500">
+                Only for categories you are already studying. Emails about your own submissions,
+                results and certificates are always sent.
+              </span>
+            </span>
+          </label>
+        </div>
+
         <Button
           size="sm"
           loading={updateProfile.isPending}
-          disabled={!name.trim() || name.trim() === user.name}
+          disabled={!name.trim() || (name.trim() === user.name && emailNotifications === (user.emailNotifications ?? true))}
           onClick={() => {
             setProfileError(null);
             updateProfile.mutate();

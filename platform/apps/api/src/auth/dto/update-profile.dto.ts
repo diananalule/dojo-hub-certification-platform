@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class UpdateProfileDto {
   @ApiProperty()
@@ -7,4 +7,10 @@ export class UpdateProfileDto {
   @MinLength(2)
   @MaxLength(100)
   name: string;
+
+  /** Opt-out for course announcements. Transactional email is always sent. */
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  emailNotifications?: boolean;
 }
