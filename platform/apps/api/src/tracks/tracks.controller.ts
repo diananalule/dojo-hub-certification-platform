@@ -48,7 +48,17 @@ export class TracksController {
     return this.tracksService.list({ categoryId, status, includeAll: true });
   }
 
+  /**
+   * Public syllabus for the landing page's course pages: enough to judge a course,
+   * without the lesson content you enrol for. The full ':id' route below needs auth.
+   */
   @Public()
+  @Get(':id/preview')
+  getPreview(@Param('id') id: string) {
+    return this.tracksService.getPreview(id);
+  }
+
+  @ApiBearerAuth()
   @Get(':id')
   getFull(@Param('id') id: string) {
     return this.tracksService.getFull(id);

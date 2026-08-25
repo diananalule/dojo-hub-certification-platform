@@ -92,6 +92,52 @@ export class TracksService {
     return this.stripAnswerKeys(track);
   }
 
+  /**
+   * Syllabus-only view for the public course page. A visitor should be able to judge a
+   * course before signing up, so lesson titles, durations and blurbs are fair game — but
+   * the lesson *content* is the thing you enrol for. Video URLs, attached documents and
+   * transcripts are dropped here rather than merely hidden in the UI, because the padlocks
+   * on the preview page are otherwise decoration: anyone could read the whole course
+   * straight off this endpoint.
+   */
+  async getPreview(id: string) {
+    const track = await this.prisma.track.findUnique({
+      where: { id },
+      include: FULL_TRACK_INCLUDE,
+    });
+    if (!track) throw new NotFoundException('Track not found.');
+    if (track.status !== TrackStatus.PUBLISHED) {
+      throw new NotFoundException('Track not found.');
+    }
+
+    const { assessment, ...rest } = track;
+    return {
+      ...rest,
+      // The final assessment carries correctIndex on every question. A visitor needs to
+      // know an assessment exists, never what is on it.
+      assessment: null,
+      hasAssessment: !!assessment,
+      modules: track.modules.map(({ quiz, ...m }) => ({
+        ...m,
+        hasQuiz: !!quiz,
+        topics: m.topics.map((t) => ({
+          id: t.id,
+          moduleId: t.moduleId,
+          order: t.order,
+          title: t.title,
+          description: t.description,
+          durationSeconds: t.durationSeconds,
+          tools: t.tools,
+          // Deliberately omitted: videoUrl, referenceVideoUrl, documents, subtitles.
+          videoUrl: null,
+          referenceVideoUrl: null,
+          documents: [],
+          subtitles: [],
+        })),
+      })),
+    };
+  }
+
   /** Same as getFull but keeps correctIndex on objective questions, for admin authoring views. */
   async getFullForAdmin(id: string) {
     const track = await this.prisma.track.findUnique({

@@ -22,7 +22,7 @@ export function CoursePreview({ trackId }: { trackId: string }) {
   const { user } = useAuth();
   const { data: track, isLoading, isError } = useQuery<TrackDto>({
     queryKey: ['track', 'public', trackId],
-    queryFn: () => api.get<TrackDto>(`/tracks/${trackId}`),
+    queryFn: () => api.get<TrackDto>(`/tracks/${trackId}/preview`),
   });
 
   if (isLoading) {
