@@ -11,7 +11,19 @@ import { Button } from '../ui/Button';
  * Keyed by topic.id from the parent (see CoursePlayer), so switching topics remounts
  * this component fresh — resetting currentTime/hasFiredWatched without an effect.
  */
-export function VideoPlayer({ topic, onWatched, watched }: { topic: TopicDto; onWatched: () => void; watched: boolean }) {
+/**
+ * `onWatched` is omitted when the lesson is being shown as a free preview: progress only
+ * means something once you are enrolled, so there is no completion control to offer.
+ */
+export function VideoPlayer({
+  topic,
+  onWatched,
+  watched = false,
+}: {
+  topic: TopicDto;
+  onWatched?: () => void;
+  watched?: boolean;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const hasFiredWatched = useRef(false);
@@ -48,7 +60,7 @@ export function VideoPlayer({ topic, onWatched, watched }: { topic: TopicDto; on
             className="w-full h-full"
             onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
             onEnded={() => {
-              if (!hasFiredWatched.current) {
+              if (!hasFiredWatched.current && onWatched) {
                 hasFiredWatched.current = true;
                 onWatched();
               }
@@ -68,15 +80,16 @@ export function VideoPlayer({ topic, onWatched, watched }: { topic: TopicDto; on
           <h3 className="font-bold text-navy-950">{topic.title}</h3>
           {topic.description && <p className="text-xs text-navy-500 mt-1">{topic.description}</p>}
         </div>
-        {watched ? (
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-green-700 shrink-0 whitespace-nowrap">
-            <CheckCircle2 className="w-4 h-4" /> Completed
-          </span>
-        ) : (
-          <Button size="sm" variant="outline" onClick={onWatched} className="shrink-0 whitespace-nowrap">
-            Mark as Complete
-          </Button>
-        )}
+        {onWatched &&
+          (watched ? (
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-green-700 shrink-0 whitespace-nowrap">
+              <CheckCircle2 className="w-4 h-4" /> Completed
+            </span>
+          ) : (
+            <Button size="sm" variant="outline" onClick={onWatched} className="shrink-0 whitespace-nowrap">
+              Mark as Complete
+            </Button>
+          ))}
       </div>
 
       {topic.tools.length > 0 && (

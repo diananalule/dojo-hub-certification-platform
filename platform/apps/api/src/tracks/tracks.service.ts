@@ -83,22 +83,40 @@ export class TracksService {
     }));
   }
 
-  async getFull(id: string) {
+  /**
+   * Course content for the player. Lesson content is what enrolment buys, so a student
+   * who has not enrolled gets the syllabus shape back instead — the same one the public
+   * course page uses. Gating this here rather than in the UI is the whole point: a lock
+   * icon in the player is decoration if the payload behind it still carries every video
+   * URL and transcript, which anyone can read off the network tab.
+   *
+   * Admins author courses and evaluators review submissions against them, so both need
+   * the content without enrolling.
+   */
+  async getFull(id: string, user: RequestUser) {
     const track = await this.prisma.track.findUnique({
       where: { id },
       include: FULL_TRACK_INCLUDE,
     });
     if (!track) throw new NotFoundException('Track not found.');
+
+    const isStaff =
+      user.role === UserRole.ADMIN || user.role === UserRole.EVALUATOR;
+    if (!isStaff) {
+      const enrolment = await this.prisma.enrollment.findUnique({
+        where: { userId_trackId: { userId: user.id, trackId: id } },
+        select: { id: true },
+      });
+      if (!enrolment) return this.toSyllabus(track);
+    }
+
     return this.stripAnswerKeys(track);
   }
 
   /**
    * Syllabus-only view for the public course page. A visitor should be able to judge a
    * course before signing up, so lesson titles, durations and blurbs are fair game — but
-   * the lesson *content* is the thing you enrol for. Video URLs, attached documents and
-   * transcripts are dropped here rather than merely hidden in the UI, because the padlocks
-   * on the preview page are otherwise decoration: anyone could read the whole course
-   * straight off this endpoint.
+   * the lesson *content* is the thing you enrol for.
    */
   async getPreview(id: string) {
     const track = await this.prisma.track.findUnique({
@@ -109,31 +127,54 @@ export class TracksService {
     if (track.status !== TrackStatus.PUBLISHED) {
       throw new NotFoundException('Track not found.');
     }
+    return this.toSyllabus(track);
+  }
 
+  /**
+   * Strips everything enrolment unlocks, leaving a syllabus anyone may read — except the
+   * course's first video lesson, which is given away as a taster so someone can judge the
+   * teaching before creating an account. Everything past that lesson comes back with no
+   * video URL at all, so the locks in the UI are backed by the payload rather than just
+   * drawn over it.
+   *
+   * Modules and topics arrive ordered by `order` (see FULL_TRACK_INCLUDE), so "first" is
+   * the course's real opening lesson. A course whose first modules are project briefs
+   * gives away the first lesson that actually has a video, rather than nothing.
+   */
+  private toSyllabus(track: FullTrack) {
     const { assessment, ...rest } = track;
+    const freeTopicId =
+      track.modules.flatMap((m) => m.topics).find((t) => t.videoUrl)?.id ?? null;
+
     return {
       ...rest,
-      // The final assessment carries correctIndex on every question. A visitor needs to
+      // The final assessment carries correctIndex on every question. A reader needs to
       // know an assessment exists, never what is on it.
       assessment: null,
       hasAssessment: !!assessment,
       modules: track.modules.map(({ quiz, ...m }) => ({
         ...m,
         hasQuiz: !!quiz,
-        topics: m.topics.map((t) => ({
-          id: t.id,
-          moduleId: t.moduleId,
-          order: t.order,
-          title: t.title,
-          description: t.description,
-          durationSeconds: t.durationSeconds,
-          tools: t.tools,
-          // Deliberately omitted: videoUrl, referenceVideoUrl, documents, subtitles.
-          videoUrl: null,
-          referenceVideoUrl: null,
-          documents: [],
-          subtitles: [],
-        })),
+        topics: m.topics.map((t) => {
+          const isFreePreview = t.id === freeTopicId;
+          return {
+            id: t.id,
+            moduleId: t.moduleId,
+            order: t.order,
+            title: t.title,
+            description: t.description,
+            durationSeconds: t.durationSeconds,
+            tools: t.tools,
+            isFreePreview,
+            // The free lesson keeps its video and captions so it can actually be watched.
+            videoUrl: isFreePreview ? t.videoUrl : null,
+            subtitles: isFreePreview ? t.subtitles : [],
+            // Never given away: downloadable course material, and the reference cut that
+            // exists for evaluators rather than students.
+            documents: [],
+            referenceVideoUrl: null,
+          };
+        }),
       })),
     };
   }

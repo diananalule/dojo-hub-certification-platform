@@ -1,22 +1,28 @@
 'use client';
 
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
-import { BookOpen, ChevronLeft, Clock, Layers, Lock, PlayCircle } from 'lucide-react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { BookOpen, ChevronLeft, Clock, Layers, Lock, Play, PlayCircle } from 'lucide-react';
 import { TrackDto } from '@dojo-hub/shared';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useMyEnrollments } from '@/lib/hooks';
 import { formatDuration } from '@/lib/video';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { TrackCover } from '@/components/student/TrackCover';
+import { VideoPlayer } from '@/components/student/VideoPlayer';
+import { Modal } from '@/components/ui/Modal';
 import { PublicNav } from './PublicNav';
 
 /**
- * Public, unauthenticated course page. Shows the full syllabus so a visitor can judge
- * the course before committing — but every lesson is locked, and starting one requires
- * an account. Reading is open; doing is not.
+ * Public, unauthenticated course page. Shows the full syllabus, and gives away the
+ * course's first video so a visitor can judge the teaching before creating an account.
+ * Every lesson after that is locked — the API sends no video URL for them — and watching
+ * them takes an account and an enrolment.
  */
 export function CoursePreview({
   trackId,
@@ -26,9 +32,26 @@ export function CoursePreview({
   initiallySignedIn?: boolean;
 }) {
   const { user } = useAuth();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { data: track, isLoading, isError } = useQuery<TrackDto>({
     queryKey: ['track', 'public', trackId],
     queryFn: () => api.get<TrackDto>(`/tracks/${trackId}/preview`),
+  });
+
+  const { data: enrollments = [] } = useMyEnrollments();
+  const isEnrolled = enrollments.some((e) => e.trackId === trackId);
+
+  // Enrolling from here is an explicit click on a button that says so, then straight
+  // into the course — the alternative was sending them to the player to find a second
+  // Enrol button, which is a dead end dressed up as a call to action.
+  const enroll = useMutation({
+    mutationFn: () => api.post(`/enrollments/tracks/${trackId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enrollments', 'me'] });
+      router.push(`/learning/${trackId}`);
+    },
   });
 
   if (isLoading) {
@@ -59,6 +82,8 @@ export function CoursePreview({
     );
   }
 
+  // The API marks exactly one lesson as the giveaway; the UI never picks it itself.
+  const freeTopic = track.modules.flatMap((m) => m.topics).find((t) => t.isFreePreview) ?? null;
   const lessonCount = track.modules.reduce((sum, m) => sum + m.topics.length, 0);
   const totalSeconds = track.modules.reduce(
     (sum, m) => sum + m.topics.reduce((s, t) => s + t.durationSeconds, 0),
@@ -128,17 +153,35 @@ export function CoursePreview({
 
                   {mod.topics.length > 0 && (
                     <ul className="divide-y divide-black/[0.05]">
-                      {mod.topics.map((topic) => (
-                        <li key={topic.id} className="px-4 py-2.5 flex items-center gap-3">
-                          <Lock className="w-3.5 h-3.5 text-navy-300 shrink-0" />
-                          <span className="text-sm text-navy-700 flex-1 min-w-0 truncate">
-                            {topic.title}
-                          </span>
-                          <span className="text-[12px] font-mono text-navy-400 shrink-0">
-                            {formatDuration(topic.durationSeconds)}
-                          </span>
-                        </li>
-                      ))}
+                      {mod.topics.map((topic) =>
+                        topic.isFreePreview ? (
+                          <li key={topic.id}>
+                            <button
+                              onClick={() => setPreviewOpen(true)}
+                              className="w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-crimson-50/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-crimson-500/60"
+                            >
+                              <Play className="w-3.5 h-3.5 text-crimson-600 shrink-0 fill-crimson-600" />
+                              <span className="text-sm font-semibold text-navy-950 flex-1 min-w-0 truncate">
+                                {topic.title}
+                              </span>
+                              <Badge tone="red">Free preview</Badge>
+                              <span className="text-[12px] font-mono text-navy-400 shrink-0">
+                                {formatDuration(topic.durationSeconds)}
+                              </span>
+                            </button>
+                          </li>
+                        ) : (
+                          <li key={topic.id} className="px-4 py-2.5 flex items-center gap-3">
+                            <Lock className="w-3.5 h-3.5 text-navy-300 shrink-0" />
+                            <span className="text-sm text-navy-700 flex-1 min-w-0 truncate">
+                              {topic.title}
+                            </span>
+                            <span className="text-[12px] font-mono text-navy-400 shrink-0">
+                              {formatDuration(topic.durationSeconds)}
+                            </span>
+                          </li>
+                        ),
+                      )}
                     </ul>
                   )}
                 </div>
@@ -169,12 +212,20 @@ export function CoursePreview({
                 </p>
               </div>
 
-              {user ? (
+              {user && isEnrolled ? (
                 <Link href={`/learning/${track.id}`} className="block">
                   <Button className="w-full">
                     <PlayCircle className="w-4 h-4" /> Go to this course
                   </Button>
                 </Link>
+              ) : user ? (
+                <Button
+                  className="w-full"
+                  onClick={() => enroll.mutate()}
+                  loading={enroll.isPending}
+                >
+                  Enroll in this course
+                </Button>
               ) : (
                 <>
                   <Link href="/register" className="block">
@@ -187,6 +238,15 @@ export function CoursePreview({
                     </Link>
                   </p>
                 </>
+              )}
+
+              {freeTopic && !isEnrolled && (
+                <button
+                  onClick={() => setPreviewOpen(true)}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-crimson-600 hover:underline"
+                >
+                  <Play className="w-3.5 h-3.5 fill-crimson-600" /> Watch the free lesson first
+                </button>
               )}
 
               <ul className="pt-2 border-t border-black/[0.06] space-y-2 text-xs text-navy-600">
@@ -207,6 +267,38 @@ export function CoursePreview({
           </aside>
         </div>
       </div>
+
+      {freeTopic && previewOpen && (
+        <Modal
+          open
+          onClose={() => setPreviewOpen(false)}
+          title="Free lesson"
+          subtitle={track.title}
+          maxWidth="max-w-3xl"
+        >
+          <div className="space-y-5">
+            <VideoPlayer topic={freeTopic} />
+
+            <div className="bg-navy-950 text-white rounded-xl p-5 text-center">
+              <p className="font-bold tracking-tight">Want the rest of the course?</p>
+              <p className="mt-1 text-sm text-navy-300">
+                {user
+                  ? 'Enrol to unlock every lesson and work towards your certificate.'
+                  : 'Create a free account, enrol, and work towards your certificate.'}
+              </p>
+              {user ? (
+                <Button className="mt-4" onClick={() => enroll.mutate()} loading={enroll.isPending}>
+                  Enroll in this course
+                </Button>
+              ) : (
+                <Link href="/register" className="inline-block mt-4">
+                  <Button>Create a free account</Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

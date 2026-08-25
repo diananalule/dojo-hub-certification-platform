@@ -60,8 +60,8 @@ export class TracksController {
 
   @ApiBearerAuth()
   @Get(':id')
-  getFull(@Param('id') id: string) {
-    return this.tracksService.getFull(id);
+  getFull(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.tracksService.getFull(id, user);
   }
 
   @ApiBearerAuth()

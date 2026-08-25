@@ -72,6 +72,12 @@ export interface TopicDto {
   subtitles: SubtitleCueDto[];
   tools: string[];
   documents: StoredFileDto[];
+  /**
+   * True on the one lesson a course gives away — the first with a video. Set by the API
+   * on syllabus responses so the UI knows which lesson to render as playable; every
+   * other lesson comes back with videoUrl stripped until the viewer enrols.
+   */
+  isFreePreview?: boolean;
 }
 
 export interface ModuleDto {

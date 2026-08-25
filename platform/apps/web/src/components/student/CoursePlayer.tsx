@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ChevronLeft } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, Lock } from 'lucide-react';
 import { AttemptTargetType, SubmissionDto, TopicProgressDto, TrackDto } from '@dojo-hub/shared';
 import { api } from '@/lib/api-client';
 import { useMyEnrollments } from '@/lib/hooks';
@@ -122,7 +122,7 @@ export function CoursePlayer({ trackId }: { trackId: string }) {
         <div className="flex items-center gap-2 mb-2">
           <Badge tone="red">{track.category.name}</Badge>
           <Badge tone="gray">{track.difficulty}</Badge>
-          {!isEnrolled && <Badge tone="amber">Preview Mode</Badge>}
+          {!isEnrolled && <Badge tone="amber">Syllabus Only</Badge>}
         </div>
         <h1 className="text-2xl font-extrabold text-navy-950">{track.title}</h1>
         <p className="text-sm text-navy-500 mt-1">{track.description}</p>
@@ -130,7 +130,7 @@ export function CoursePlayer({ trackId }: { trackId: string }) {
 
       {!isEnrolled && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-          You&apos;re browsing in preview mode. Enroll to track progress, submit competency evidence, and take assessments.
+          You&apos;re browsing the syllabus. Enroll to watch the lessons, track progress, submit competency evidence and take assessments.
         </div>
       )}
 
@@ -155,15 +155,49 @@ export function CoursePlayer({ trackId }: { trackId: string }) {
 
         <div className="bg-white rounded-2xl border border-navy-200 p-5 space-y-6">
           {selectedTopic ? (
-            <>
-              <VideoPlayer
-                key={selectedTopic.id}
-                topic={selectedTopic}
-                watched={watchedIds.has(selectedTopic.id)}
-                onWatched={() => isEnrolled && markWatched.mutate(selectedTopic.id)}
-              />
-              {isEnrolled && <SubmissionWorkspace topicId={selectedTopic.id} topicTitle={selectedTopic.title} />}
-            </>
+            isEnrolled ? (
+              <>
+                <VideoPlayer
+                  key={selectedTopic.id}
+                  topic={selectedTopic}
+                  watched={watchedIds.has(selectedTopic.id)}
+                  onWatched={() => markWatched.mutate(selectedTopic.id)}
+                />
+                <SubmissionWorkspace topicId={selectedTopic.id} topicTitle={selectedTopic.title} />
+              </>
+            ) : selectedTopic.isFreePreview ? (
+              /* The one lesson a course gives away. No completion control — progress
+                 only counts once enrolled — and a nudge to enrol for the rest. */
+              <>
+                <VideoPlayer key={selectedTopic.id} topic={selectedTopic} />
+                <div className="bg-navy-950 text-white rounded-xl p-5 text-center">
+                  <p className="font-bold tracking-tight">That was the free lesson</p>
+                  <p className="mt-1 text-sm text-navy-300 max-w-sm mx-auto">
+                    Enrol to watch the rest of this course, track your progress and work
+                    towards your certificate.
+                  </p>
+                  <Button className="mt-4" onClick={() => enroll.mutate()} loading={enroll.isPending}>
+                    Enroll in this Track
+                  </Button>
+                </div>
+              </>
+            ) : (
+              /* The API sends no videoUrl for locked lessons, so there is nothing to play
+                 here — this panel explains why rather than showing an empty player. */
+              <div className="text-center py-10 px-4 bg-navy-50 rounded-xl border border-navy-200">
+                <div className="w-12 h-12 mx-auto rounded-full bg-navy-950 flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="mt-4 font-bold text-navy-950">{selectedTopic.title}</h3>
+                <p className="mt-1.5 text-sm text-navy-500 max-w-sm mx-auto">
+                  Enrol in this course to watch this lesson, track your progress and submit
+                  work towards your certificate.
+                </p>
+                <Button className="mt-5" onClick={() => enroll.mutate()} loading={enroll.isPending}>
+                  Enroll in this Track
+                </Button>
+              </div>
+            )
           ) : activeModule ? (
             <>
               <div>
