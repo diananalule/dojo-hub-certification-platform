@@ -18,7 +18,13 @@ import { PublicNav } from './PublicNav';
  * the course before committing — but every lesson is locked, and starting one requires
  * an account. Reading is open; doing is not.
  */
-export function CoursePreview({ trackId }: { trackId: string }) {
+export function CoursePreview({
+  trackId,
+  initiallySignedIn = false,
+}: {
+  trackId: string;
+  initiallySignedIn?: boolean;
+}) {
   const { user } = useAuth();
   const { data: track, isLoading, isError } = useQuery<TrackDto>({
     queryKey: ['track', 'public', trackId],
@@ -28,7 +34,7 @@ export function CoursePreview({ trackId }: { trackId: string }) {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white">
-        <PublicNav />
+        <PublicNav initiallySignedIn={initiallySignedIn} />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-4">
           <Skeleton className="h-8 w-2/5" />
           <Skeleton className="h-4 w-3/5" />
@@ -41,7 +47,7 @@ export function CoursePreview({ trackId }: { trackId: string }) {
   if (isError || !track) {
     return (
       <div className="min-h-screen bg-white">
-        <PublicNav />
+        <PublicNav initiallySignedIn={initiallySignedIn} />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-20 text-center">
           <h1 className="text-2xl font-extrabold text-navy-950">Course not found</h1>
           <p className="text-navy-500 mt-2">This course may have been unpublished.</p>
@@ -61,7 +67,7 @@ export function CoursePreview({ trackId }: { trackId: string }) {
 
   return (
     <div className="min-h-screen bg-white">
-      <PublicNav />
+      <PublicNav initiallySignedIn={initiallySignedIn} />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <Link

@@ -34,7 +34,7 @@ const STEPS = [
   },
 ];
 
-export function LandingPage() {
+export function LandingPage({ initiallySignedIn = false }: { initiallySignedIn?: boolean }) {
   const { data: tracks = [], isLoading } = useTracks();
   const { data: categories = [] } = useCategories();
 
@@ -50,7 +50,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <PublicNav />
+      <PublicNav initiallySignedIn={initiallySignedIn} />
 
       {/* ------------------------------------------------------------- hero */}
       <section className="relative overflow-hidden">

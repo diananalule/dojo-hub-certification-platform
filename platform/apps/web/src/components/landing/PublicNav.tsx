@@ -12,8 +12,14 @@ const ROLE_HOME: Record<string, string> = { STUDENT: '/home', EVALUATOR: '/queue
  * signed in is offered their dashboard instead, so the page never asks them to log
  * in again.
  */
-export function PublicNav() {
+export function PublicNav({ initiallySignedIn = false }: { initiallySignedIn?: boolean }) {
   const { user, isLoading } = useAuth();
+
+  // While /auth/me is in flight we trust the server's cookie check instead of assuming
+  // signed-out. Assuming signed-out put the correct buttons in the HTML for visitors but
+  // made returning users watch Sign In / Create Account render and then vanish once the
+  // request landed — on a cold API that flash lasts long enough to look broken.
+  const signedIn = isLoading ? initiallySignedIn : !!user;
 
   return (
     <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-black/[0.06]">
@@ -38,12 +44,10 @@ export function PublicNav() {
             How it works
           </Link>
 
-          {/* The signed-out buttons are the default rather than a loading blank: almost
-              everyone landing here is signed out, they must be in the server-rendered
-              HTML for crawlers, and an empty top-right corner that pops two buttons in
-              after hydration looks broken. Signed-in users swap to their dashboard. */}
-          {!isLoading && user ? (
-            <Link href={ROLE_HOME[user.role] ?? '/home'}>
+          {signedIn ? (
+            // The role is unknown until /auth/me resolves, so the href falls back to the
+            // student home. RequireRole redirects anyone who lands on the wrong one.
+            <Link href={user ? (ROLE_HOME[user.role] ?? '/home') : '/home'}>
               <Button size="sm">Go to my dashboard</Button>
             </Link>
           ) : (
