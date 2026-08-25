@@ -96,7 +96,7 @@ export function Sidebar({
           <h1 className="font-extrabold text-xl tracking-tight text-white leading-none">
             DOJO <span className="text-crimson-500">HUB</span>
           </h1>
-          <span className="text-[12px] font-mono text-navy-300 tracking-[0.15em] uppercase">Certification Engine</span>
+          <span className="text-[12px] font-mono text-navy-300 tracking-[0.15em] uppercase">Learning Platform</span>
         </div>
         <button
           onClick={onMobileClose}
@@ -190,7 +190,7 @@ export function Sidebar({
           <span className="font-mono text-[12px] tracking-wide">Active Credentials</span>
           <span className="font-mono text-[12px] text-crimson-400 font-bold">{credentialsCount}</span>
         </div>
-        <p className="text-[12px] text-center text-navy-500 pt-2.5 mt-1.5 border-t border-white/[0.06]">© 2026 Dojo Hub Platform Inc.</p>
+        <p className="text-[12px] text-center text-navy-500 pt-2.5 mt-1.5 border-t border-white/[0.06]">© 2026 Dojo Hub (SMC)</p>
       </div>
       </aside>
     </>

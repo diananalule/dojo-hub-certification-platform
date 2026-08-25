@@ -56,7 +56,7 @@ function VerifyEmail() {
           <h2 className="text-2xl font-extrabold text-navy-950 tracking-tight">Email confirmed</h2>
           <p className="text-sm text-navy-500">Your account is active. You can sign in now.</p>
           <Link href="/login" className="block">
-            <Button className="w-full">Sign in to Dojo Hub</Button>
+            <Button className="w-full">Sign in</Button>
           </Link>
         </>
       )}

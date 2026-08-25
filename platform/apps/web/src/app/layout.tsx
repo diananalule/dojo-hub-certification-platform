@@ -9,8 +9,8 @@ const inter = Inter({ variable: '--font-inter', subsets: ['latin'], weight: ['40
 const jetbrainsMono = JetBrains_Mono({ variable: '--font-jetbrains-mono', subsets: ['latin'], weight: ['400', '500', '600', '700'] });
 
 export const metadata: Metadata = {
-  title: 'Dojo Hub Certification Platform',
-  description: 'A secure certification platform for students, evaluators, and platform administrators.',
+  title: 'Dojo Hub Learning Platform',
+  description: 'Structured certification courses in software, hardware and data science, with supervisor-reviewed capstones and verifiable certificates.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

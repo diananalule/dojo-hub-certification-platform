@@ -1,7 +1,7 @@
 export default () => ({
   email: {
     apiKey: process.env.RESEND_API_KEY ?? '',
-    from: process.env.EMAIL_FROM ?? 'Dojo Hub <noreply@dojohubug.com>',
+    from: process.env.EMAIL_FROM ?? 'Dojo Hub Learning Platform <noreply@dojohubug.com>',
   },
 
   nodeEnv: process.env.NODE_ENV ?? 'development',

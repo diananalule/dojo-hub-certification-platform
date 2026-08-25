@@ -78,7 +78,7 @@ class EnvVars {
 
   @IsString()
   @IsOptional()
-  EMAIL_FROM: string = 'Dojo Hub <noreply@dojohubug.com>';
+  EMAIL_FROM: string = 'Dojo Hub Learning Platform <noreply@dojohubug.com>';
 
   @IsString()
   @IsOptional()

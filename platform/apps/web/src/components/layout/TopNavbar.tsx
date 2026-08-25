@@ -77,7 +77,7 @@ export function TopNavbar({
         </button>
         <div className="min-w-0">
           <h2 className="text-lg sm:text-xl font-extrabold text-deep-black tracking-tight truncate">{title}</h2>
-          <p className="text-xs text-navy-500 mt-0.5 truncate hidden sm:block">{subtitle ?? 'Dojo Hub Certifications • Secure Client Terminal'}</p>
+          <p className="text-xs text-navy-500 mt-0.5 truncate hidden sm:block">{subtitle ?? 'Dojo Hub Learning Platform'}</p>
         </div>
       </div>
 

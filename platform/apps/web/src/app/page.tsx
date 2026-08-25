@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { LandingPage } from '@/components/landing/LandingPage';
 
 const ROLE_HOME: Record<string, string> = {
   STUDENT: '/home',
@@ -15,13 +16,9 @@ export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoading) return;
-    router.replace(user ? (ROLE_HOME[user.role] ?? '/login') : '/login');
+    // Signed-in users have no use for the marketing page; send them to their work.
+    if (!isLoading && user) router.replace(ROLE_HOME[user.role] ?? '/home');
   }, [user, isLoading, router]);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-navy-950">
-      <div className="text-sm text-navy-400 font-mono animate-pulse">Loading Dojo Hub...</div>
-    </div>
-  );
+  return <LandingPage />;
 }

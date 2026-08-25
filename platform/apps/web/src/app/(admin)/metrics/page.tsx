@@ -30,7 +30,7 @@ export default function AdminMetricsPage() {
       doc.rect(0, 0, 210, 30, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(16);
-      doc.text('Dojo Hub — Platform Usage Report', 14, 18);
+      doc.text('Dojo Hub Learning Platform — Usage Report', 14, 18);
       doc.setFontSize(9);
       doc.text(new Date().toLocaleDateString(), 14, 25);
 

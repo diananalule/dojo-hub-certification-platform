@@ -35,14 +35,14 @@ export class AuthService {
     const web = this.configService.get<string>('webUrl') ?? 'https://dojo-hub-web.onrender.com';
     await this.emailService.send({
       to: email,
-      subject: 'Confirm your Dojo Hub email address',
+      subject: 'Confirm your email for Dojo Hub Learning Platform',
       block: {
-        heading: `Welcome to Dojo Hub, ${name.split(' ')[0]}`,
+        heading: `Welcome to Dojo Hub Learning Platform, ${name.split(' ')[0]}`,
         intro:
           'Confirm your email address to activate your account. You will not be able to sign in until you do.',
         ctaLabel: 'Confirm my email address',
         ctaUrl: `${web}/verify-email?token=${token}`,
-        outro: 'If you did not create a Dojo Hub account, you can ignore this email.',
+        outro: 'If you did not create a Dojo Hub Learning Platform account, you can ignore this email.',
       },
     });
   }

@@ -9,9 +9,9 @@ import { Sidebar } from './Sidebar';
 import { TopNavbar } from './TopNavbar';
 
 const TITLES: Record<UserRole, { title: string; subtitle: string }> = {
-  STUDENT: { title: 'Student Learning Center', subtitle: 'Dojo Hub Certifications • Secure Client Terminal' },
-  ADMIN: { title: 'Platform Governance Panel', subtitle: 'Dojo Hub Certifications • Secure Client Terminal' },
-  EVALUATOR: { title: 'Supervisor & Grading Sandbox', subtitle: 'Dojo Hub Certifications • Secure Client Terminal' },
+  STUDENT: { title: 'Student Learning Center', subtitle: 'Dojo Hub Learning Platform' },
+  ADMIN: { title: 'Platform Governance Panel', subtitle: 'Dojo Hub Learning Platform' },
+  EVALUATOR: { title: 'Supervisor & Grading Sandbox', subtitle: 'Dojo Hub Learning Platform' },
 };
 
 export function DashboardShell({ role, children }: { role: UserRole; children: React.ReactNode }) {

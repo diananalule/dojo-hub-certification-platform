@@ -79,8 +79,10 @@ function LoginForm() {
             <DojoHubLogo size={72} />
           </div>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-navy-950 tracking-tight">Sign In to Dojo Hub</h2>
-        <p className="text-sm text-navy-500 max-w-xs mx-auto">Enter your credentials to access your secure workspace</p>
+        <h1 className="text-2xl sm:text-[1.75rem] font-extrabold text-navy-950 tracking-tight leading-tight text-balance">
+          Dojo Hub <span className="text-crimson-600">Learning Platform</span>
+        </h1>
+        <p className="text-sm text-navy-500 max-w-xs mx-auto">Sign in with your credentials to access your workspace</p>
       </div>
 
       {justRegistered && !error && (

@@ -59,8 +59,12 @@ export function renderEmail(block: EmailBlock): string {
               font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
     <div style="background:#ffffff;border:1px solid ${LINE};border-radius:16px;padding:32px 30px;">
 
-      <p style="margin:0 0 26px;font-size:18px;font-weight:800;letter-spacing:-0.02em;color:${INK};">
+      <p style="margin:0 0 4px;font-size:18px;font-weight:800;letter-spacing:-0.02em;color:${INK};">
         DOJO <span style="color:${ACCENT};">HUB</span>
+      </p>
+      <p style="margin:0 0 26px;font-size:11px;font-weight:700;letter-spacing:0.14em;
+                text-transform:uppercase;color:${FAINT};">
+        Learning Platform
       </p>
 
       <h1 style="margin:0 0 14px;font-size:22px;line-height:1.3;font-weight:800;
@@ -74,8 +78,8 @@ export function renderEmail(block: EmailBlock): string {
     </div>
 
     <p style="margin:20px 4px 0;font-size:12px;line-height:1.6;color:${FAINT};">
-      Dojo Hub (SMC) · Certification Platform<br>
-      You're receiving this because you have a Dojo Hub account.
+      Dojo Hub Learning Platform · Dojo Hub (SMC)<br>
+      You're receiving this because you have a Dojo Hub Learning Platform account.
     </p>
   </div>
 </body></html>`;
@@ -90,6 +94,6 @@ export function renderText(block: EmailBlock): string {
   }
   if (block.ctaUrl) lines.push('', `${block.ctaLabel ?? 'Open'}: ${block.ctaUrl}`);
   if (block.outro) lines.push('', block.outro);
-  lines.push('', 'Dojo Hub (SMC) · Certification Platform');
+  lines.push('', 'Dojo Hub Learning Platform · Dojo Hub (SMC)');
   return lines.join('\n');
 }

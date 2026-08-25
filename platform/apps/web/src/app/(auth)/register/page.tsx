@@ -52,8 +52,10 @@ export default function RegisterPage() {
             <DojoHubLogo size={72} />
           </div>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-navy-950 tracking-tight">Create Dojo Account</h2>
-        <p className="text-sm text-navy-500 max-w-xs mx-auto">Join the secure academy certification platform</p>
+        <h1 className="text-2xl sm:text-[1.75rem] font-extrabold text-navy-950 tracking-tight leading-tight text-balance">
+          Dojo Hub <span className="text-crimson-600">Learning Platform</span>
+        </h1>
+        <p className="text-sm text-navy-500 max-w-xs mx-auto">Create your free account to start a course</p>
       </div>
 
       {error && <div className="p-3.5 bg-crimson-50 border border-crimson-200 text-crimson-700 rounded-xl text-sm font-medium animate-fadeIn">{error}</div>}

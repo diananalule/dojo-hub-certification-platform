@@ -121,7 +121,7 @@ export class UsersService {
       userId: targetId,
       type: NotificationType.ACCOUNT_SUSPENDED,
       title: 'Account suspended',
-      body: 'Your Dojo Hub account access has been suspended by a platform administrator.',
+      body: 'Your Dojo Hub Learning Platform account access has been suspended by a platform administrator.',
     });
 
     return { success: true };
@@ -147,7 +147,7 @@ export class UsersService {
       userId: targetId,
       type: NotificationType.ACCOUNT_REACTIVATED,
       title: 'Account reactivated',
-      body: 'Your Dojo Hub account access has been restored.',
+      body: 'Your Dojo Hub Learning Platform account access has been restored.',
     });
 
     return { success: true };

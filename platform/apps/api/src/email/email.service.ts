@@ -24,7 +24,7 @@ export class EmailService {
 
   constructor(private readonly configService: ConfigService) {
     const apiKey = this.configService.get<string>('email.apiKey');
-    this.from = this.configService.get<string>('email.from') ?? 'Dojo Hub <noreply@dojohubug.com>';
+    this.from = this.configService.get<string>('email.from') ?? 'Dojo Hub Learning Platform <noreply@dojohubug.com>';
     // No key configured (local dev) — run in log-only mode rather than crashing.
     this.client = apiKey ? new Resend(apiKey) : null;
   }

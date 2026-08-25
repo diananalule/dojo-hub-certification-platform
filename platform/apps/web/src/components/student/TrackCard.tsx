@@ -14,7 +14,14 @@ import { TrackCover } from './TrackCover';
  * panel (the pattern Udemy/Coursera use) so learners can judge a course without
  * navigating away; touch devices never trigger it and just tap through.
  */
-export function TrackCard({ track }: { track: TrackSummaryDto }) {
+export function TrackCard({
+  track,
+  href,
+}: {
+  track: TrackSummaryDto;
+  /** Overridden on the public site, where cards lead to the preview, not the player. */
+  href?: string;
+}) {
   const [panel, setPanel] = useState<{ left: number; top: number } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -47,7 +54,7 @@ export function TrackCard({ track }: { track: TrackSummaryDto }) {
   return (
     <div ref={cardRef} className="relative h-full" onMouseEnter={open} onMouseLeave={close}>
       <Link
-        href={`/learning/${track.id}`}
+        href={href ?? `/learning/${track.id}`}
         className="card-lift flex flex-col bg-white rounded-2xl border border-black/[0.06] overflow-hidden shadow-[0_1px_2px_rgba(5,7,12,0.04)] group h-full"
       >
         <div className="relative aspect-[16/9] overflow-hidden bg-navy-100">
@@ -101,7 +108,7 @@ export function TrackCard({ track }: { track: TrackSummaryDto }) {
             className="hidden lg:block fixed z-50 w-80 animate-scaleUp pointer-events-none"
             style={{ left: panel.left, top: panel.top }}
           >
-            <HoverDetail track={track} />
+            <HoverDetail track={track} href={href} />
           </div>,
           document.body,
         )}
@@ -109,7 +116,7 @@ export function TrackCard({ track }: { track: TrackSummaryDto }) {
   );
 }
 
-function HoverDetail({ track }: { track: TrackSummaryDto }) {
+function HoverDetail({ track, href }: { track: TrackSummaryDto; href?: string }) {
   return (
     <div className="pointer-events-auto">
       <div className="bg-white rounded-2xl border border-black/[0.08] shadow-2xl shadow-black/15 p-5 space-y-3">
@@ -135,7 +142,7 @@ function HoverDetail({ track }: { track: TrackSummaryDto }) {
           </li>
         </ul>
         <Link
-          href={`/learning/${track.id}`}
+          href={href ?? `/learning/${track.id}`}
           className="block w-full text-center bg-crimson-600 hover:bg-crimson-700 text-white text-sm font-bold py-2.5 rounded-xl transition-colors"
         >
           View Course
