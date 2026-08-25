@@ -28,9 +28,13 @@ export function HeroCarousel() {
     return () => clearInterval(id);
   }, [paused]);
 
+  // The frame is 3/2 from `sm` up because that matches the source photos (612x408 and
+  // 612x344). A 4/3 frame forced object-cover to upscale every slide to fill it — ~8%
+  // for the 3:2 shots, ~29% for the 16:9 ones — which softens them on a high-DPI screen
+  // for no gain. Portrait phones keep 4/3, where a taller crop reads better.
   return (
     <div
-      className="relative w-full aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/3] rounded-3xl overflow-hidden bg-navy-900 shadow-2xl shadow-black/30"
+      className="relative w-full aspect-[4/3] sm:aspect-[3/2] lg:aspect-[3/2] rounded-3xl overflow-hidden bg-navy-900 shadow-2xl shadow-black/30"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
