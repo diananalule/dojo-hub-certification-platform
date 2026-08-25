@@ -38,7 +38,11 @@ export function PublicNav() {
             How it works
           </Link>
 
-          {isLoading ? null : user ? (
+          {/* The signed-out buttons are the default rather than a loading blank: almost
+              everyone landing here is signed out, they must be in the server-rendered
+              HTML for crawlers, and an empty top-right corner that pops two buttons in
+              after hydration looks broken. Signed-in users swap to their dashboard. */}
+          {!isLoading && user ? (
             <Link href={ROLE_HOME[user.role] ?? '/home'}>
               <Button size="sm">Go to my dashboard</Button>
             </Link>
