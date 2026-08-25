@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ProxyAwareThrottlerGuard } from './common/guards/proxy-throttler.guard';
 import { BullModule } from '@nestjs/bullmq';
 import configuration from './config/configuration';
 import { validateEnv } from './config/env.validation';
@@ -40,7 +41,9 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
     }),
     EmailModule,
     ThrottlerModule.forRoot({
-      throttlers: [{ ttl: 60_000, limit: 120 }],
+      // Raised from 120: requests arrive via the web app's proxy, so a single
+      // shared bucket would be exhausted by a handful of active users.
+      throttlers: [{ ttl: 60_000, limit: 400 }],
     }),
     BullModule.forRootAsync({
       inject: [ConfigService],
@@ -71,7 +74,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: ProxyAwareThrottlerGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },

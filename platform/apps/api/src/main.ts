@@ -13,6 +13,10 @@ async function bootstrap() {
   app.use(helmet({ crossOriginResourcePolicy: false }));
   app.use(cookieParser());
 
+  // Behind the web app's /api proxy (and Render's edge), so honour X-Forwarded-For
+  // when resolving the client address — otherwise rate limiting sees one shared IP.
+  app.getHttpAdapter().getInstance().set('trust proxy', true);
+
   app.enableCors({
     origin: configService.get<string>('webUrl'),
     credentials: true,
