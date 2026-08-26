@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { IsString, MinLength } from 'class-validator';
 import { UserRole } from '@dojo-hub/shared';
@@ -24,6 +24,18 @@ export class CredentialsController {
   @Get('me')
   listMine(@CurrentUser() user: RequestUser) {
     return this.credentialsService.listForStudent(user.id);
+  }
+
+  /** Claims the certificate for a course the student has finished. */
+  @ApiBearerAuth()
+  @Roles(UserRole.STUDENT)
+  @Post('tracks/:trackId')
+  @HttpCode(HttpStatus.OK)
+  claimForTrack(
+    @CurrentUser() user: RequestUser,
+    @Param('trackId') trackId: string,
+  ) {
+    return this.credentialsService.claimForTrack(user.id, trackId);
   }
 
   @Public()

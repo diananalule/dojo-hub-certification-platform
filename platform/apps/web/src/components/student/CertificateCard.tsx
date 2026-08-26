@@ -2,6 +2,7 @@
 
 import { CredentialDto } from '@dojo-hub/shared';
 import { Button } from '../ui/Button';
+import { subjectLine } from './certificate-subject';
 
 export function CertificateCard({ credential, onView }: { credential: CredentialDto; onView: () => void }) {
   return (
@@ -19,7 +20,7 @@ export function CertificateCard({ credential, onView }: { credential: Credential
         <h2 className="text-2xl font-extrabold text-navy-950">{credential.studentName}</h2>
         <p className="text-xs text-navy-500">{credential.studentEmail}</p>
         <p className="text-[12px] uppercase text-navy-400 tracking-widest pt-2">Has fully achieved proficiency in</p>
-        <h3 className="text-xl font-extrabold text-crimson-600">{credential.level.name} Level</h3>
+        <h3 className="text-xl font-extrabold text-crimson-600">{subjectLine(credential)}</h3>
         <p className="text-xs text-navy-400">Issued on {new Date(credential.issuedAt).toLocaleDateString()}</p>
 
         <div className="bg-navy-50 rounded-xl p-4 flex items-center justify-between text-left mt-4">

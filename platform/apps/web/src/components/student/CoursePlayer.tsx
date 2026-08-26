@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ChevronLeft, Lock } from 'lucide-react';
-import { AttemptTargetType, SubmissionDto, TopicProgressDto, TrackDto } from '@dojo-hub/shared';
+import { AlertTriangle, Award, ChevronLeft, Lock } from 'lucide-react';
+import { AttemptTargetType, CredentialDto, SubmissionDto, TopicProgressDto, TrackDto } from '@dojo-hub/shared';
 import { api } from '@/lib/api-client';
 import { useMyEnrollments } from '@/lib/hooks';
 import { Button } from '../ui/Button';
@@ -67,6 +67,19 @@ export function CoursePlayer({ trackId }: { trackId: string }) {
       setSelectedModuleId(null);
     },
   });
+  // Certificates are per course now: finish it, claim it. The API re-checks completion,
+  // so this button is a convenience rather than the thing granting the certificate.
+  const { data: credentials = [] } = useQuery<CredentialDto[]>({
+    queryKey: ['credentials', 'me'],
+    queryFn: () => api.get<CredentialDto[]>('/credentials/me'),
+  });
+  const certificate = credentials.find((c) => c.trackId === trackId && c.status === 'ACTIVE');
+
+  const claimCertificate = useMutation({
+    mutationFn: () => api.post<CredentialDto>(`/credentials/tracks/${trackId}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['credentials', 'me'] }),
+  });
+
   const markWatched = useMutation({
     mutationFn: (topicId: string) => api.post(`/progress/topics/${topicId}/watched`),
     onSuccess: () => {
@@ -131,6 +144,37 @@ export function CoursePlayer({ trackId }: { trackId: string }) {
       {!isEnrolled && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
           You&apos;re browsing the syllabus. Enroll to watch the lessons, track progress, submit competency evidence and take assessments.
+        </div>
+      )}
+
+      {isEnrolled && enrollment?.status === 'COMPLETED' && (
+        <div className="rounded-2xl bg-gradient-to-br from-navy-950 to-navy-900 border border-navy-900 p-6 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+          <div className="flex items-start gap-3">
+            <Award className="w-8 h-8 text-crimson-400 shrink-0" />
+            <div>
+              <p className="font-bold text-white tracking-tight">
+                {certificate ? 'Your certificate is ready' : 'You have completed this course'}
+              </p>
+              <p className="text-sm text-navy-300 mt-0.5">
+                {certificate
+                  ? 'Find it in My Certificates — it carries a QR code anyone can verify.'
+                  : 'Claim your certificate for this course. It carries a QR code anyone can verify.'}
+              </p>
+            </div>
+          </div>
+          {certificate ? (
+            <Link href="/certificates" className="shrink-0">
+              <Button>View my certificate</Button>
+            </Link>
+          ) : (
+            <Button
+              className="shrink-0"
+              onClick={() => claimCertificate.mutate()}
+              loading={claimCertificate.isPending}
+            >
+              Get my certificate
+            </Button>
+          )}
         </div>
       )}
 

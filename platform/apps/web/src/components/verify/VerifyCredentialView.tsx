@@ -13,7 +13,10 @@ interface VerifyResult {
   reason?: string;
   credential?: {
     studentName: string;
-    level: { name: string };
+    /** Course title, or a level name for credentials issued under the older ladder. */
+    subjectTitle: string;
+    track: { title: string } | null;
+    level: { name: string } | null;
     issuedAt: string;
     hash: string;
     status: string;
@@ -49,7 +52,10 @@ export function VerifyCredentialView({ credentialId }: { credentialId: string })
                 <h1 className="text-xl font-extrabold text-navy-950">Credential Verified</h1>
                 <div className="bg-navy-50 rounded-xl p-5 text-left space-y-2">
                   <Row label="Recipient" value={data.credential!.studentName} />
-                  <Row label="Level" value={data.credential!.level.name} />
+                  <Row
+                    label={data.credential!.track ? 'Course' : 'Level'}
+                    value={data.credential!.subjectTitle}
+                  />
                   <Row label="Issued" value={new Date(data.credential!.issuedAt).toLocaleDateString()} />
                   <Row label="Hash" value={data.credential!.hash} mono />
                 </div>

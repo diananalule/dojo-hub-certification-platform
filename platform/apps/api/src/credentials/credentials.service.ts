@@ -10,6 +10,7 @@ import * as QRCode from 'qrcode';
 import {
   AuditLogSeverity,
   CredentialStatus,
+  EnrollmentStatus,
   NotificationType,
   UserRole,
 } from '@dojo-hub/shared';
@@ -29,6 +30,98 @@ export class CredentialsService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
+  /**
+   * Issues the certificate for a completed course. The student claims it themselves —
+   * finish the course, press the button, get the certificate — rather than waiting on a
+   * capstone review, which is how the ladder credential worked.
+   *
+   * The only gate is that the enrolment is actually COMPLETED, which is set when the
+   * track assessment is passed. Checking it here rather than trusting the caller matters:
+   * the button is just a UI affordance, and this endpoint is reachable without it.
+   *
+   * Deliberately unsigned by an evaluator: nobody reviewed it. A future rule ("no
+   * certificate below 90%") belongs here, and would set evaluatorSignatureId when it
+   * starts requiring a human.
+   */
+  async claimForTrack(studentId: string, trackId: string) {
+    const track = await this.prisma.track.findUnique({
+      where: { id: trackId },
+      include: { category: true },
+    });
+    if (!track) throw new NotFoundException('Course not found.');
+
+    const enrolment = await this.prisma.enrollment.findUnique({
+      where: { userId_trackId: { userId: studentId, trackId } },
+    });
+    if (!enrolment) {
+      throw new BadRequestException('You are not enrolled in this course.');
+    }
+    if (enrolment.status !== EnrollmentStatus.COMPLETED) {
+      throw new BadRequestException(
+        'Finish the course before claiming your certificate.',
+      );
+    }
+
+    // Claiming twice hands back the existing certificate rather than minting a second
+    // one, so a double-tap or a re-visit cannot produce duplicates.
+    const existing = await this.prisma.credential.findFirst({
+      where: { studentId, trackId, status: CredentialStatus.ACTIVE },
+      include: {
+        level: true,
+        track: { include: { category: true } },
+        evaluatorSignature: true,
+        adminSignature: true,
+      },
+    });
+    if (existing) return this.toPublicShape(existing);
+
+    const id = randomUUID();
+    const issuedAt = new Date();
+    const hash = this.computeHash(id, studentId, trackId, issuedAt);
+
+    const credential = await this.prisma.credential.create({
+      data: {
+        id,
+        studentId,
+        trackId,
+        issuedAt,
+        hash,
+        status: CredentialStatus.ACTIVE,
+      },
+      include: {
+        level: true,
+        track: { include: { category: true } },
+        evaluatorSignature: true,
+        adminSignature: true,
+      },
+    });
+
+    await this.notificationsService.notify({
+      userId: studentId,
+      type: NotificationType.CREDENTIAL_ISSUED,
+      title: `Your certificate for ${track.title} is ready`,
+      body: 'It is available in My Certificates, and carries a QR code anyone can verify.',
+      email: {
+        subject: `Your certificate for ${track.title} is ready`,
+        block: {
+          heading: 'Congratulations — your certificate has been issued',
+          intro:
+            `You completed ${track.title}, and your certificate is now available. It carries a ` +
+            'QR code that anyone can scan to verify it, without needing an account.',
+          facts: [
+            { label: 'Course', value: track.title },
+            { label: 'Issued', value: issuedAt.toDateString() },
+          ],
+          ctaLabel: 'View and download your certificate',
+          ctaUrl: `${WEB}/certificates`,
+          outro: 'You can download it as a PDF to share or print.',
+        },
+      },
+    });
+
+    return this.toPublicShape(credential);
+  }
+
   async issue(studentId: string, levelId: string, evaluatorId: string) {
     const id = randomUUID();
     const issuedAt = new Date();
@@ -47,20 +140,21 @@ export class CredentialsService {
       include: { level: true },
     });
 
+    const levelName = credential.level?.name ?? 'Certification';
     await this.notificationsService.notify({
       userId: studentId,
       type: NotificationType.CREDENTIAL_ISSUED,
-      title: `Your ${credential.level.name} credential has been issued!`,
+      title: `Your ${levelName} credential has been issued!`,
       body: 'Your new certification is now available in My Certificates, cryptographically signed and ready to verify.',
       email: {
-        subject: `Your ${credential.level.name} certificate is ready`,
+        subject: `Your ${levelName} certificate is ready`,
         block: {
           heading: 'Congratulations — your certificate has been issued',
           intro:
-            `Your capstone was approved and your ${credential.level.name} certificate is now available. ` +
+            `Your capstone was approved and your ${levelName} certificate is now available. ` +
             'It carries a QR code that anyone can scan to verify it, without needing an account.',
           facts: [
-            { label: 'Level', value: credential.level.name },
+            { label: 'Level', value: levelName },
             { label: 'Issued', value: new Date(credential.issuedAt).toDateString() },
           ],
           ctaLabel: 'View and download your certificate',
@@ -76,7 +170,12 @@ export class CredentialsService {
   async listForStudent(studentId: string) {
     const credentials = await this.prisma.credential.findMany({
       where: { studentId },
-      include: { level: true, evaluatorSignature: true, adminSignature: true },
+      include: {
+        level: true,
+        track: { include: { category: true } },
+        evaluatorSignature: true,
+        adminSignature: true,
+      },
       orderBy: { issuedAt: 'desc' },
     });
     return Promise.all(credentials.map((c) => this.toPublicShape(c)));
@@ -85,7 +184,12 @@ export class CredentialsService {
   async verify(id: string) {
     const credential = await this.prisma.credential.findUnique({
       where: { id },
-      include: { level: true, evaluatorSignature: true, adminSignature: true },
+      include: {
+        level: true,
+        track: { include: { category: true } },
+        evaluatorSignature: true,
+        adminSignature: true,
+      },
     });
     if (!credential) {
       return {
@@ -97,7 +201,7 @@ export class CredentialsService {
     const expectedHash = this.computeHash(
       credential.id,
       credential.studentId,
-      credential.levelId,
+      credential.levelId ?? credential.trackId ?? '',
       credential.issuedAt,
     );
     const integrityOk = expectedHash === credential.hash;
@@ -126,12 +230,12 @@ export class CredentialsService {
     const updated = await this.prisma.credential.update({
       where: { id },
       data: { adminSignatureId: actor.id },
-      include: { level: true },
+      include: { level: true, track: true },
     });
 
     await this.auditService.log({
       actor,
-      action: `Countersigned credential ${id} (${updated.level.name})`,
+      action: `Countersigned credential ${id} (${updated.track?.title ?? updated.level?.name ?? 'unknown subject'})`,
       entityType: 'Credential',
       entityId: id,
       severity: AuditLogSeverity.SUCCESS,
@@ -167,28 +271,36 @@ export class CredentialsService {
     return updated;
   }
 
+  /**
+   * `subjectId` is the level id for ladder credentials and the track id for course
+   * certificates. Keeping one function and one field order means every credential
+   * already issued against a level still hashes to exactly the value stored on it,
+   * so none of them stop verifying.
+   */
   private computeHash(
     id: string,
     studentId: string,
-    levelId: string,
+    subjectId: string,
     issuedAt: Date,
   ) {
     const secret = this.configService.get<string>('credential.hmacSecret')!;
     return createHmac('sha256', secret)
-      .update(`${id}|${studentId}|${levelId}|${issuedAt.toISOString()}`)
+      .update(`${id}|${studentId}|${subjectId}|${issuedAt.toISOString()}`)
       .digest('hex');
   }
 
   private async toPublicShape(credential: {
     id: string;
     studentId: string;
-    levelId: string;
+    levelId: string | null;
     level: {
       id: string;
       name: string;
       order: number;
       passingScore: number;
-    };
+    } | null;
+    trackId?: string | null;
+    track?: { id: string; title: string; category: { name: string } } | null;
     issuedAt: Date;
     hash: string;
     status: CredentialStatus;
@@ -204,8 +316,18 @@ export class CredentialsService {
       studentId: credential.studentId,
       studentName: student?.name ?? 'Former student',
       studentEmail: student?.email ?? '',
+      subjectTitle:
+        credential.track?.title ?? credential.level?.name ?? 'Certificate',
       levelId: credential.levelId,
       level: credential.level,
+      trackId: credential.trackId ?? null,
+      track: credential.track
+        ? {
+            id: credential.track.id,
+            title: credential.track.title,
+            categoryName: credential.track.category.name,
+          }
+        : null,
       issuedAt: credential.issuedAt,
       hash: credential.hash,
       verifyUrl: `${appUrl}/verify/${credential.id}`,

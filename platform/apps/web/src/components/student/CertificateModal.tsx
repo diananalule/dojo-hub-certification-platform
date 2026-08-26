@@ -6,6 +6,7 @@ import { jsPDF } from 'jspdf';
 import { CredentialDto } from '@dojo-hub/shared';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { subjectLine } from './certificate-subject';
 
 /** Horizontal wordmark — carries the Dojo Hub name, so no separate text heading is drawn. */
 const LOGO_SRC = '/dojohub-wordmark.jpeg';
@@ -161,7 +162,7 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
     doc.setFont('times', 'bold');
     doc.setFontSize(21);
     doc.setTextColor(30, 37, 51);
-    doc.text(`${credential.level.name} Level`, mid, 132, { align: 'center' });
+    doc.text(subjectLine(credential), mid, 132, { align: 'center' });
 
     // --- Footer row: date (left) · QR (centre) · signature (right) ---
     // Vertical rhythm is deliberately spaced so the signatory's role clears the
@@ -234,7 +235,7 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
     doc.setTextColor(170, 176, 188);
     doc.text(credential.hash, w - 20, h - 15.5, { align: 'right' });
 
-    doc.save(`DojoHub_Certificate_${credential.studentName.replace(/\s+/g, '_')}_${credential.level.name}.pdf`);
+    doc.save(`DojoHub_Certificate_${credential.studentName.replace(/\s+/g, '_')}_${credential.subjectTitle.replace(/\s+/g, '_')}.pdf`);
   };
 
   return (
@@ -263,7 +264,7 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
           <p className="mt-2 text-xs text-navy-400">{credential.studentEmail}</p>
 
           <p className="mt-5 text-xs text-navy-500">for successfully completing the requirements of</p>
-          <p className="mt-1 text-xl font-extrabold text-navy-950">{credential.level.name} Level</p>
+          <p className="mt-1 text-xl font-extrabold text-navy-950">{subjectLine(credential)}</p>
 
           <div className="mt-7 grid grid-cols-3 items-end gap-4">
             <div>

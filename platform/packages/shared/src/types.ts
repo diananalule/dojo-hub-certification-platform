@@ -242,8 +242,17 @@ export interface CredentialDto {
   studentId: string;
   studentName: string;
   studentEmail: string;
-  levelId: string;
-  level: LevelDto;
+  /**
+   * A credential certifies exactly one subject: a course the student completed, or —
+   * for credentials issued under the older ladder — a level whose capstone was approved.
+   * `subjectTitle` is whichever of the two applies, so the certificate and the public
+   * verification page can render one line without caring which kind they were handed.
+   */
+  subjectTitle: string;
+  levelId: string | null;
+  level: LevelDto | null;
+  trackId: string | null;
+  track: { id: string; title: string; categoryName: string } | null;
   issuedAt: string;
   hash: string;
   verifyUrl: string;
