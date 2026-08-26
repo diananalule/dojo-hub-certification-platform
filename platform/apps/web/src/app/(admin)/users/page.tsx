@@ -161,9 +161,13 @@ export default function AdminUsersPage() {
                     {/* Registration only issues Student and Evaluator accounts, so this
                         select is the only route to an admin account. Changing your own
                         role is blocked here and in the API. */}
+                    <label className="flex items-center gap-2">
+                      <span className="text-[11px] font-mono uppercase tracking-[0.12em] font-bold text-navy-500">
+                        Role
+                      </span>
                     <select
                       aria-label={`Change role for ${u.name}`}
-                      className="input h-9 py-0 text-xs w-[11.5rem]"
+                      className="input py-2 text-xs leading-5 w-[12.5rem] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                       value={u.role}
                       disabled={u.id === me?.id || changeRole.isPending}
                       title={u.id === me?.id ? 'You cannot change your own role' : undefined}
@@ -191,6 +195,7 @@ export default function AdminUsersPage() {
                         </option>
                       ))}
                     </select>
+                    </label>
 
                     {u.role !== 'ADMIN' && (u.status === 'ACTIVE' ? (
                       <Button size="sm" variant="secondary" loading={suspend.isPending} onClick={() => suspend.mutate(u.id)}>
