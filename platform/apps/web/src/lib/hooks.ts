@@ -5,12 +5,22 @@ import { CategoryDto, EnrollmentDto, TrackSummaryDto } from '@dojo-hub/shared';
 import { api } from './api-client';
 import { useAuth } from './auth-context';
 
-export function useTracks() {
-  return useQuery<TrackSummaryDto[]>({ queryKey: ['tracks'], queryFn: () => api.get<TrackSummaryDto[]>('/tracks') });
+// `initialData` lets a server-rendered page seed the cache, so the list is painted on
+// first load and survives the client fetch being refused during a cold start.
+export function useTracks(initialData?: TrackSummaryDto[]) {
+  return useQuery<TrackSummaryDto[]>({
+    queryKey: ['tracks'],
+    queryFn: () => api.get<TrackSummaryDto[]>('/tracks'),
+    initialData,
+  });
 }
 
-export function useCategories() {
-  return useQuery<CategoryDto[]>({ queryKey: ['categories'], queryFn: () => api.get<CategoryDto[]>('/categories') });
+export function useCategories(initialData?: CategoryDto[]) {
+  return useQuery<CategoryDto[]>({
+    queryKey: ['categories'],
+    queryFn: () => api.get<CategoryDto[]>('/categories'),
+    initialData,
+  });
 }
 
 export function useMyEnrollments() {

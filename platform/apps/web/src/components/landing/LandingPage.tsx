@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { Award, BookOpen, CheckCircle2, QrCode, ShieldCheck, Users } from 'lucide-react';
+import { Award, BookOpen, CheckCircle2, QrCode, ShieldCheck, TriangleAlert, Users } from 'lucide-react';
+import { CategoryDto, TrackSummaryDto } from '@dojo-hub/shared';
 import { useCategories, useTracks } from '@/lib/hooks';
 import { TrackCard } from '@/components/student/TrackCard';
 import { CourseCarousel } from '@/components/student/CourseCarousel';
@@ -34,9 +35,26 @@ const STEPS = [
   },
 ];
 
-export function LandingPage({ initiallySignedIn = false }: { initiallySignedIn?: boolean }) {
-  const { data: tracks = [], isLoading } = useTracks();
-  const { data: categories = [] } = useCategories();
+export function LandingPage({
+  initiallySignedIn = false,
+  initialTracks,
+  initialCategories,
+}: {
+  initiallySignedIn?: boolean;
+  /** Null means the server could not reach the API — not that the catalogue is empty. */
+  initialTracks?: TrackSummaryDto[] | null;
+  initialCategories?: CategoryDto[] | null;
+}) {
+  // Seeded from the server render, so the catalogue is on screen immediately and does
+  // not blank out if the client's own fetch is refused during a cold start.
+  const { data: tracks = [], isLoading, isError } = useTracks(initialTracks ?? undefined);
+  const { data: categories = [], isError: categoriesError } = useCategories(
+    initialCategories ?? undefined,
+  );
+
+  // Distinguish "we could not load this" from "there is nothing here". Showing the
+  // latter for a failed request told visitors the platform had no courses at all.
+  const failed = (isError || categoriesError) && tracks.length === 0;
 
   const rows = useMemo(
     () =>
@@ -129,6 +147,23 @@ export function LandingPage({ initiallySignedIn = false }: { initiallySignedIn?:
             {Array.from({ length: 4 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
+          </div>
+        ) : failed ? (
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <TriangleAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-amber-900">We could not load the courses just now</p>
+              <p className="text-sm text-amber-800 mt-1">
+                This is usually a moment&apos;s hiccup while the platform wakes up. Refresh the
+                page and they should appear.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-3 text-sm font-bold text-crimson-600 hover:underline"
+              >
+                Refresh the page
+              </button>
+            </div>
           </div>
         ) : rows.length === 0 ? (
           <p className="text-navy-400">No courses have been published yet. Check back shortly.</p>
