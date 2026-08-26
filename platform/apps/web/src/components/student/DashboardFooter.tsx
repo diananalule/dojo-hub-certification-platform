@@ -1,9 +1,12 @@
 import Link from 'next/link';
+import { ShieldCheck } from 'lucide-react';
 import DojoHubLogo from '@/components/DojoHubLogo';
 
 /**
- * Dashboard footer. Every link points at a route that actually exists — no
- * placeholder About/Terms pages that would 404.
+ * Dashboard footer. Sits on a grey panel rather than the page's white background —
+ * on white it blended into the content above it and read as stray links rather than
+ * as the end of the page. Every link points at a route that actually exists, so there
+ * are no placeholder About/Terms pages waiting to 404.
  */
 const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] = [
   {
@@ -22,41 +25,58 @@ const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] =
 
 export function DashboardFooter() {
   return (
-    <footer className="mt-12 border-t border-black/[0.06] pt-8 pb-4">
-      <div className="flex flex-col gap-8 sm:flex-row sm:justify-between">
+    <footer className="mt-12 rounded-2xl border border-black/[0.07] bg-navy-50 overflow-hidden">
+      <div className="p-6 sm:p-8 grid gap-8 sm:grid-cols-[minmax(0,1.4fr)_repeat(2,minmax(0,1fr))]">
         <div className="max-w-xs">
           <div className="flex items-center gap-2.5">
-            <DojoHubLogo size={28} />
-            <span className="font-extrabold tracking-tight text-navy-950">
-              DOJO <span className="text-crimson-600">HUB</span>
+            <span className="bg-white rounded-lg p-1.5 border border-black/[0.05] shrink-0">
+              <DojoHubLogo size={26} />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-extrabold tracking-tight text-navy-950 leading-none">
+                DOJO <span className="text-crimson-600">HUB</span>
+              </span>
+              <span className="block text-[11px] font-mono uppercase tracking-[0.14em] text-navy-400 leading-none mt-1">
+                Learning Platform
+              </span>
             </span>
           </div>
-          <p className="mt-2 text-xs text-navy-500 leading-relaxed">
-            Structured certification tracks with evaluator-reviewed capstones and verifiable credentials.
+          <p className="mt-3.5 text-xs text-navy-500 leading-relaxed">
+            Structured certification tracks with supervisor-reviewed capstones and verifiable
+            credentials.
           </p>
         </div>
 
-        <div className="flex gap-12 sm:gap-16">
-          {COLUMNS.map((col) => (
-            <div key={col.heading}>
-              <p className="text-[12px] font-mono uppercase tracking-wider font-bold text-navy-500 mb-2.5">{col.heading}</p>
-              <ul className="space-y-1.5">
-                {col.links.map((l) => (
-                  <li key={l.href + l.label}>
-                    <Link href={l.href} className="text-xs text-navy-600 hover:text-crimson-600 transition-colors">
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+        {COLUMNS.map((col) => (
+          <div key={col.heading}>
+            <p className="text-[11px] font-mono uppercase tracking-[0.14em] font-bold text-navy-500 mb-3">
+              {col.heading}
+            </p>
+            <ul className="space-y-2">
+              {col.links.map((l) => (
+                <li key={l.href + l.label}>
+                  <Link
+                    href={l.href}
+                    className="text-sm text-navy-600 hover:text-crimson-600 transition-colors"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
 
-      <p className="mt-8 pt-4 border-t border-black/[0.04] text-[12px] text-navy-400">
-        © {new Date().getFullYear()} Dojo Hub (SMC). Every certificate carries a QR code that anyone can verify.
-      </p>
+      <div className="border-t border-black/[0.06] bg-navy-100/50 px-6 sm:px-8 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <p className="text-[12px] text-navy-500">
+          © {new Date().getFullYear()} Dojo Hub (SMC). All rights reserved.
+        </p>
+        <p className="flex items-center gap-1.5 text-[12px] text-navy-500">
+          <ShieldCheck className="w-3.5 h-3.5 text-crimson-600 shrink-0" />
+          Every certificate carries a QR code that anyone can verify.
+        </p>
+      </div>
     </footer>
   );
 }

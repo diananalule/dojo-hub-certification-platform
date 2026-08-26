@@ -44,24 +44,26 @@ export function PublicNav({ initiallySignedIn = false }: { initiallySignedIn?: b
             How it works
           </Link>
 
-          {signedIn ? (
+          {/* Sign In and Create Account stay visible for everyone, signed in or not, so the
+              way into an account is always on screen where a visitor expects it. A signed-in
+              viewer gets their dashboard link in front of them as the primary action. */}
+          {signedIn && (
             // The role is unknown until /auth/me resolves, so the href falls back to the
             // student home. RequireRole redirects anyone who lands on the wrong one.
             <Link href={user ? (ROLE_HOME[user.role] ?? '/home') : '/home'}>
               <Button size="sm">Go to my dashboard</Button>
             </Link>
-          ) : (
-            <>
-              <Link href="/login">
-                <Button size="sm" variant="outline">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button size="sm">Create Account</Button>
-              </Link>
-            </>
           )}
+          <Link href="/login">
+            <Button size="sm" variant="outline">
+              Sign In
+            </Button>
+          </Link>
+          <Link href="/register">
+            <Button size="sm" variant={signedIn ? 'outline' : 'primary'}>
+              Create Account
+            </Button>
+          </Link>
         </nav>
       </div>
     </header>

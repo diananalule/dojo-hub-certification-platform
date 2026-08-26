@@ -13,9 +13,14 @@ async function bootstrap() {
   app.use(helmet({ crossOriginResourcePolicy: false }));
   app.use(cookieParser());
 
-  // Behind the web app's /api proxy (and Render's edge), so honour X-Forwarded-For
-  // when resolving the client address — otherwise rate limiting sees one shared IP.
-  app.getHttpAdapter().getInstance().set('trust proxy', true);
+  // Two proxies sit in front of a browser request: Render's edge, and the web app's
+  // /api rewrite. Express must be told how many, not just that some exist — `true`
+  // trusts the entire X-Forwarded-For chain, which means req.ip becomes the left-most
+  // entry, and that one is written by the client. A forged header then buys a fresh
+  // rate-limit budget, and a transparent ISP proxy that injects its own address puts
+  // every user behind it into a single shared budget. Counting the hops instead makes
+  // Express resolve the address from the trusted end of the chain.
+  app.getHttpAdapter().getInstance().set('trust proxy', 2);
 
   app.enableCors({
     origin: configService.get<string>('webUrl'),

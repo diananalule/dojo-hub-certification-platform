@@ -205,8 +205,9 @@ export function LandingPage({ initiallySignedIn = false }: { initiallySignedIn?:
       </section>
 
       {/* --------------------------------------------------------- footer */}
-      <footer className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <div className="flex flex-col sm:flex-row justify-between gap-6">
+      <footer className="bg-navy-50 border-t border-black/[0.07]">
+       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+        <div className="flex flex-col sm:flex-row justify-between gap-8">
           <div className="max-w-sm">
             <p className="font-extrabold tracking-tight text-navy-950">
               DOJO <span className="text-crimson-600">HUB</span>{' '}
@@ -256,10 +257,19 @@ export function LandingPage({ initiallySignedIn = false }: { initiallySignedIn?:
           </div>
         </div>
 
-        <p className="mt-8 pt-4 border-t border-black/[0.06] text-[12px] text-navy-400">
-          © {new Date().getFullYear()} Dojo Hub (SMC). Every certificate carries a QR code that
-          anyone can verify.
-        </p>
+       </div>
+
+       <div className="border-t border-black/[0.06] bg-navy-100/50">
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+           <p className="text-[12px] text-navy-500">
+             © {new Date().getFullYear()} Dojo Hub (SMC). All rights reserved.
+           </p>
+           <p className="flex items-center gap-1.5 text-[12px] text-navy-500">
+             <ShieldCheck className="w-3.5 h-3.5 text-crimson-600 shrink-0" />
+             Every certificate carries a QR code that anyone can verify.
+           </p>
+         </div>
+       </div>
       </footer>
     </div>
   );
