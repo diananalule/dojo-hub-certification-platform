@@ -55,6 +55,13 @@ export default function AdminUsersPage() {
     onError: (e) => alert(e instanceof ApiError ? e.message : 'Failed to change role.'),
   });
 
+  const changeEmail = useMutation({
+    mutationFn: ({ id, email }: { id: string; email: string }) =>
+      api.patch(`/users/${id}/email`, { email }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users', 'directory'] }),
+    onError: (e) => alert(e instanceof ApiError ? e.message : 'Failed to change email.'),
+  });
+
   const suspend = useMutation({
     mutationFn: (id: string) => api.patch(`/users/${id}/suspend`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users', 'directory'] }),
@@ -206,6 +213,25 @@ export default function AdminUsersPage() {
                         Reactivate
                       </Button>
                     ))}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      loading={changeEmail.isPending}
+                      onClick={() => {
+                        const next = prompt(
+                          `New email address for ${u.name} (currently ${u.email}).`
+                            + '\n\n'
+                            + `A confirmation link is sent to the new address, and the account cannot sign in until it is confirmed. Records and history are unaffected.`,
+                          u.email,
+                        );
+                        if (next === null) return;
+                        const email = next.trim();
+                        if (!email || email === u.email) return;
+                        changeEmail.mutate({ id: u.id, email });
+                      }}
+                    >
+                      Change Email
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"

@@ -1,9 +1,11 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import {
   AccountStatus,
   AuditLogSeverity,
@@ -14,6 +16,7 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EmailService } from '../email/email.service';
 import { RequestUser } from '../common/types/request-user.interface';
 
 /** Human-readable role names, so audit entries and emails read like the UI does. */
@@ -29,6 +32,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly notificationsService: NotificationsService,
+    private readonly emailService: EmailService,
   ) {}
 
   async directory(role: UserRole | undefined, search: string | undefined) {
@@ -232,6 +236,79 @@ export class UsersService {
     });
 
     return { success: true };
+  }
+
+  /**
+   * Reassigns an account's email address.
+   *
+   * Exists because an address is otherwise locked to an account forever: submissions and
+   * credentials deliberately outlive a deleted user (a certificate stays verifiable, with
+   * the holder shown as "Former student"), so an evaluator who has graded anything cannot
+   * be terminated, and their address can never be reused. Moving the account off the
+   * address frees it without destroying a single record. It also fixes the more ordinary
+   * case of an address mistyped at signup, which previously had no remedy at all.
+   *
+   * The new address is treated as unproven: verification is reset and a fresh confirmation
+   * link is sent to it. Otherwise an admin could point an account at any address and have
+   * it count as verified.
+   */
+  async changeEmail(actor: RequestUser, targetId: string, rawEmail: string) {
+    const target = await this.findOrThrow(targetId);
+    const email = rawEmail.trim().toLowerCase();
+
+    if (email === target.email) {
+      throw new BadRequestException(
+        'This account already uses that email address.',
+      );
+    }
+
+    const taken = await this.prisma.user.findUnique({ where: { email } });
+    if (taken) {
+      throw new ConflictException('Another account already uses that email address.');
+    }
+
+    const verificationToken = randomUUID();
+    await this.prisma.user.update({
+      where: { id: targetId },
+      data: {
+        email,
+        emailVerifiedAt: null,
+        verificationToken,
+        verificationSentAt: new Date(),
+      },
+    });
+
+    // The email travels inside the access token, so existing sessions would keep
+    // presenting the old identity until they expired.
+    await this.prisma.refreshToken.updateMany({
+      where: { userId: targetId },
+      data: { revoked: true },
+    });
+
+    await this.auditService.log({
+      actor,
+      action: `Changed email for "${target.name}" from ${target.email} to ${email}`,
+      entityType: 'User',
+      entityId: targetId,
+      severity: AuditLogSeverity.WARNING,
+    });
+
+    const web = process.env.WEB_URL ?? 'https://dojo-hub-web.onrender.com';
+    await this.emailService.send({
+      to: email,
+      subject: 'Confirm your new email for Dojo Hub Learning Platform',
+      block: {
+        heading: 'Confirm your new email address',
+        intro:
+          `A platform administrator changed the email address on your Dojo Hub Learning Platform ` +
+          `account to this one. Confirm it to activate the account — you will not be able to sign in until you do.`,
+        ctaLabel: 'Confirm my email address',
+        ctaUrl: `${web}/verify-email?token=${verificationToken}`,
+        outro: 'If you were not expecting this, contact your platform administrator.',
+      },
+    });
+
+    return { success: true, email };
   }
 
   async terminate(actor: RequestUser, targetId: string) {
