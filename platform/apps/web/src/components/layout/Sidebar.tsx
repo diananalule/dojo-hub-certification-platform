@@ -89,15 +89,26 @@ export function Sidebar({
       {/* Brand header */}
       <div className="relative p-5 flex items-center gap-3 overflow-hidden">
         <div className="absolute inset-x-0 -top-16 h-32 bg-crimson-600/15 blur-3xl rounded-full pointer-events-none" />
-        <div className="relative p-1.5 bg-white rounded-xl shadow-lg flex items-center justify-center">
-          <DojoHubLogo size={34} />
-        </div>
-        <div className="relative flex-1">
-          <h1 className="font-extrabold text-xl tracking-tight text-white leading-none">
-            DOJO <span className="text-crimson-500">HUB</span>
-          </h1>
-          <span className="text-[12px] font-mono text-navy-300 tracking-[0.15em] uppercase">Learning Platform</span>
-        </div>
+        {/* The brand is the way back out to the public site. Without it the landing page
+            was only reachable by editing the URL, which is the convention every product
+            follows for a reason. */}
+        <Link
+          href="/"
+          title="Go to the Dojo Hub Learning Platform home page"
+          className="relative flex-1 flex items-center gap-3 min-w-0 rounded-xl -m-1 p-1 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson-500/60"
+        >
+          <span className="p-1.5 bg-white rounded-xl shadow-lg flex items-center justify-center shrink-0">
+            <DojoHubLogo size={34} />
+          </span>
+          <span className="min-w-0">
+            <span className="block font-extrabold text-xl tracking-tight text-white leading-none group-hover:text-crimson-100 transition-colors">
+              DOJO <span className="text-crimson-500">HUB</span>
+            </span>
+            <span className="block text-[12px] font-mono text-navy-300 tracking-[0.15em] uppercase mt-0.5">
+              Learning Platform
+            </span>
+          </span>
+        </Link>
         <button
           onClick={onMobileClose}
           aria-label="Close navigation menu"

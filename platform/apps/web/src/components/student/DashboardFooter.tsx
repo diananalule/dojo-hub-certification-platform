@@ -12,6 +12,9 @@ const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] =
   {
     heading: 'Learning',
     links: [
+      // '/home' is the signed-in dashboard; '/' is the public site. Naming them apart
+      // matters — without this link the landing page was only reachable by URL editing.
+      { label: 'Public home page', href: '/' },
       { label: 'Browse Courses', href: '/home' },
       { label: 'My Learning', href: '/learning' },
       { label: 'My Certificates', href: '/certificates' },
@@ -28,7 +31,7 @@ export function DashboardFooter() {
     <footer className="mt-12 rounded-2xl border border-black/[0.07] bg-navy-50 overflow-hidden">
       <div className="p-6 sm:p-8 grid gap-8 sm:grid-cols-[minmax(0,1.4fr)_repeat(2,minmax(0,1fr))]">
         <div className="max-w-xs">
-          <div className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5 group" title="Go to the public home page">
             <span className="bg-white rounded-lg p-1.5 border border-black/[0.05] shrink-0">
               <DojoHubLogo size={26} />
             </span>
@@ -40,7 +43,7 @@ export function DashboardFooter() {
                 Learning Platform
               </span>
             </span>
-          </div>
+          </Link>
           <p className="mt-3.5 text-xs text-navy-500 leading-relaxed">
             Structured certification tracks with supervisor-reviewed capstones and verifiable
             credentials.
