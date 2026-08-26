@@ -16,6 +16,13 @@ import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RequestUser } from '../common/types/request-user.interface';
 
+/** Human-readable role names, so audit entries and emails read like the UI does. */
+const ROLE_LABEL: Record<UserRole, string> = {
+  [UserRole.STUDENT]: 'Student',
+  [UserRole.EVALUATOR]: 'Senior Supervisor',
+  [UserRole.ADMIN]: 'Platform Admin',
+};
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -148,6 +155,80 @@ export class UsersService {
       type: NotificationType.ACCOUNT_REACTIVATED,
       title: 'Account reactivated',
       body: 'Your Dojo Hub Learning Platform account access has been restored.',
+    });
+
+    return { success: true };
+  }
+
+  /**
+   * Grants or changes a workspace role. This is the only way an admin account can come
+   * into existence: registration is deliberately limited to students and evaluators, so
+   * a new tutor signs up normally, verifies their email, and is promoted here.
+   *
+   * Two guards exist to keep the platform from becoming unadministrable. An admin cannot
+   * change their own role, which would otherwise let someone demote themselves out of the
+   * only account that can undo it; and the last remaining admin cannot be demoted by
+   * anyone, which would leave nobody able to author courses or manage users.
+   */
+  async changeRole(actor: RequestUser, targetId: string, role: UserRole) {
+    const target = await this.findOrThrow(targetId);
+
+    if (target.id === actor.id) {
+      throw new ForbiddenException(
+        'You cannot change your own role. Ask another administrator to do it.',
+      );
+    }
+
+    if (target.role === role) {
+      throw new BadRequestException(`This account is already a ${ROLE_LABEL[role]}.`);
+    }
+
+    if (target.role === UserRole.ADMIN) {
+      const admins = await this.prisma.user.count({
+        where: { role: UserRole.ADMIN, status: AccountStatus.ACTIVE },
+      });
+      if (admins <= 1) {
+        throw new ForbiddenException(
+          'This is the last administrator account. Promote another administrator first.',
+        );
+      }
+    }
+
+    await this.prisma.user.update({ where: { id: targetId }, data: { role } });
+
+    // The old role is baked into the access token, so anything still holding one would
+    // keep the previous permissions until it expired. Dropping the refresh tokens forces
+    // a fresh sign-in and a token that reflects the new role.
+    await this.prisma.refreshToken.updateMany({
+      where: { userId: targetId },
+      data: { revoked: true },
+    });
+
+    await this.auditService.log({
+      actor,
+      action: `Changed role for "${target.name}" (${target.email}) from ${ROLE_LABEL[target.role]} to ${ROLE_LABEL[role]}`,
+      entityType: 'User',
+      entityId: targetId,
+      severity: AuditLogSeverity.WARNING,
+    });
+
+    await this.notificationsService.notify({
+      userId: targetId,
+      type: NotificationType.ROLE_CHANGED,
+      title: `You are now a ${ROLE_LABEL[role]}`,
+      body: `A platform administrator changed your role to ${ROLE_LABEL[role]}. Sign in again to use your new permissions.`,
+      email: {
+        subject: `Your Dojo Hub Learning Platform role changed to ${ROLE_LABEL[role]}`,
+        block: {
+          heading: `You are now a ${ROLE_LABEL[role]}`,
+          intro: `A platform administrator changed your role on Dojo Hub Learning Platform. You will need to sign in again for the change to take effect.`,
+          facts: [
+            { label: 'Previous role', value: ROLE_LABEL[target.role] },
+            { label: 'New role', value: ROLE_LABEL[role] },
+          ],
+          outro: 'If you were not expecting this, contact your platform administrator.',
+        },
+      },
     });
 
     return { success: true };

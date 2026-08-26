@@ -108,6 +108,7 @@ export const NotificationType = {
   OFFICE_HOUR_CANCELLED: 'OFFICE_HOUR_CANCELLED',
   ACCOUNT_SUSPENDED: 'ACCOUNT_SUSPENDED',
   ACCOUNT_REACTIVATED: 'ACCOUNT_REACTIVATED',
+  ROLE_CHANGED: 'ROLE_CHANGED',
 } as const;
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType];
 

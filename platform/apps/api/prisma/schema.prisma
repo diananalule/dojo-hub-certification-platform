@@ -102,6 +102,7 @@ enum NotificationType {
   OFFICE_HOUR_CANCELLED
   ACCOUNT_SUSPENDED
   ACCOUNT_REACTIVATED
+  ROLE_CHANGED
 }
 
 // ---------------------------------------------------------------------------

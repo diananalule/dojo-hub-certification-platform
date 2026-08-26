@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ClipboardCheck, Search } from 'lucide-react';
 import { SubmissionDto, UserRole } from '@dojo-hub/shared';
 import { api, ApiError } from '@/lib/api-client';
+import { useAuth } from '@/lib/auth-context';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -26,16 +27,32 @@ interface DirectoryEntry {
 const ROLE_OPTIONS = [
   { value: UserRole.STUDENT, label: 'Disciple Candidates' },
   { value: UserRole.EVALUATOR, label: 'Senior Supervisors' },
+  { value: UserRole.ADMIN, label: 'Platform Admins' },
 ];
+
+/** Matches the labels used in the sidebar and in the emails the API sends. */
+const ROLE_LABEL: Record<UserRole, string> = {
+  [UserRole.STUDENT]: 'Student',
+  [UserRole.EVALUATOR]: 'Senior Supervisor',
+  [UserRole.ADMIN]: 'Platform Admin',
+};
 
 export default function AdminUsersPage() {
   const queryClient = useQueryClient();
+  const { user: me } = useAuth();
   const [role, setRole] = useState<UserRole>(UserRole.STUDENT);
   const [search, setSearch] = useState('');
 
   const { data: users = [], isLoading } = useQuery<DirectoryEntry[]>({
     queryKey: ['users', 'directory', role, search],
     queryFn: () => api.get<DirectoryEntry[]>(`/users?role=${role}&search=${encodeURIComponent(search)}`),
+  });
+
+  const changeRole = useMutation({
+    mutationFn: ({ id, role: next }: { id: string; role: UserRole }) =>
+      api.patch(`/users/${id}/role`, { role: next }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users', 'directory'] }),
+    onError: (e) => alert(e instanceof ApiError ? e.message : 'Failed to change role.'),
   });
 
   const suspend = useMutation({
@@ -118,7 +135,9 @@ export default function AdminUsersPage() {
                 </td>
                 <td className="px-6 py-4 text-xs text-navy-500 font-mono">{new Date(u.createdAt).toLocaleDateString()}</td>
                 <td className="px-6 py-4 text-xs text-navy-600 space-y-0.5">
-                  {u.role === 'STUDENT' ? (
+                  {u.role === 'ADMIN' ? (
+                    <p className="text-navy-400">Authors courses and manages accounts.</p>
+                  ) : u.role === 'STUDENT' ? (
                     <>
                       <p>
                         Level: <strong className="text-navy-950">{u.studentProfile?.currentLevel.name}</strong>
@@ -138,8 +157,42 @@ export default function AdminUsersPage() {
                   )}
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex items-center justify-end gap-2">
-                    {u.status === 'ACTIVE' ? (
+                  <div className="flex items-center justify-end gap-2 flex-wrap">
+                    {/* Registration only issues Student and Evaluator accounts, so this
+                        select is the only route to an admin account. Changing your own
+                        role is blocked here and in the API. */}
+                    <select
+                      aria-label={`Change role for ${u.name}`}
+                      className="input h-9 py-0 text-xs w-[11.5rem]"
+                      value={u.role}
+                      disabled={u.id === me?.id || changeRole.isPending}
+                      title={u.id === me?.id ? 'You cannot change your own role' : undefined}
+                      onChange={(e) => {
+                        const next = e.target.value as UserRole;
+                        if (next === u.role) return;
+                        if (
+                          confirm(
+                            `Change ${u.name} (${u.email}) from ${ROLE_LABEL[u.role]} to ${ROLE_LABEL[next]}?\n\n` +
+                              `They will be signed out and must sign in again.` +
+                              (next === UserRole.ADMIN
+                                ? '\n\nPlatform Admins can create courses and manage every account.'
+                                : ''),
+                          )
+                        ) {
+                          changeRole.mutate({ id: u.id, role: next });
+                        } else {
+                          e.target.value = u.role;
+                        }
+                      }}
+                    >
+                      {ROLE_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {ROLE_LABEL[o.value]}
+                        </option>
+                      ))}
+                    </select>
+
+                    {u.role !== 'ADMIN' && (u.status === 'ACTIVE' ? (
                       <Button size="sm" variant="secondary" loading={suspend.isPending} onClick={() => suspend.mutate(u.id)}>
                         Suspend
                       </Button>
@@ -147,7 +200,7 @@ export default function AdminUsersPage() {
                       <Button size="sm" variant="secondary" loading={reactivate.isPending} onClick={() => reactivate.mutate(u.id)}>
                         Reactivate
                       </Button>
-                    )}
+                    ))}
                     <Button
                       size="sm"
                       variant="outline"
@@ -168,16 +221,18 @@ Minimum 8 characters. Share it with them directly — it is not emailed.`,
                     >
                       Reset Password
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      loading={terminate.isPending}
-                      onClick={() => {
-                        if (confirm(`Permanently terminate ${u.name}'s account? This cannot be undone.`)) terminate.mutate(u.id);
-                      }}
-                    >
-                      Terminate
-                    </Button>
+                    {u.role !== 'ADMIN' && (
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        loading={terminate.isPending}
+                        onClick={() => {
+                          if (confirm(`Permanently terminate ${u.name}'s account? This cannot be undone.`)) terminate.mutate(u.id);
+                        }}
+                      >
+                        Terminate
+                      </Button>
+                    )}
                   </div>
                 </td>
               </tr>

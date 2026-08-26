@@ -6,6 +6,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequestUser } from '../common/types/request-user.interface';
 import { UsersService } from './users.service';
 import { AdminResetPasswordDto } from './dto/reset-password.dto';
+import { ChangeRoleDto } from './dto/change-role.dto';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -40,6 +41,16 @@ export class UsersController {
     @Body() dto: AdminResetPasswordDto,
   ) {
     return this.usersService.adminResetPassword(actor, id, dto.newPassword);
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Patch(':id/role')
+  changeRole(
+    @CurrentUser() actor: RequestUser,
+    @Param('id') id: string,
+    @Body() dto: ChangeRoleDto,
+  ) {
+    return this.usersService.changeRole(actor, id, dto.role);
   }
 
   @Roles(UserRole.ADMIN)
