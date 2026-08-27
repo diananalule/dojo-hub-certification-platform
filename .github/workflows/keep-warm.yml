@@ -1,0 +1,51 @@
+# Keeps the Render services out of hibernation during the hours people actually visit.
+#
+# Free Render services stop after ~15 minutes idle, and the next visitor waits up to a
+# minute while a container is allocated and Node boots. This pings both services often
+# enough that they never reach that idle threshold.
+#
+# It runs 04:00-18:00 UTC, which is 07:00-21:00 in Kampala (EAT, UTC+3). Overnight the
+# services are left to sleep on purpose: free instances are metered by running hours, and
+# keeping two of them up around the clock burns through that allowance far faster than
+# letting them idle while nobody is looking.
+#
+# This is a stopgap for as long as the platform stays on the free plan. It does nothing
+# about the free Postgres instance expiring, which takes the platform offline outright.
+name: Keep services warm
+
+on:
+  schedule:
+    # Every 10 minutes during Kampala working hours. GitHub does not guarantee punctual
+    # scheduling and can run these late under load, so the interval is well inside the
+    # ~15 minute hibernation window rather than close to it.
+    - cron: '*/10 4-18 * * *'
+  workflow_dispatch: # so it can be triggered by hand before a demo
+
+concurrency:
+  group: keep-warm
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wake the API
+        run: |
+          # --max-time is generous: if the service *is* asleep this call is what wakes
+          # it, and that is the slow path we are paying for so visitors do not have to.
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 120 \
+            https://dojo-hub-api.onrender.com/api/health || echo "000")
+          echo "API /api/health -> $code"
+          if [ "$code" != "200" ]; then
+            echo "::warning::API did not return 200 (got $code)"
+          fi
+
+      - name: Wake the web app
+        run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 120 \
+            https://dojo-hub-web.onrender.com/ || echo "000")
+          echo "Web / -> $code"
+          if [ "$code" != "200" ]; then
+            echo "::warning::Web app did not return 200 (got $code)"
+          fi
