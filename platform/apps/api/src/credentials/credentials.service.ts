@@ -57,9 +57,21 @@ export class CredentialsService {
       throw new BadRequestException('You are not enrolled in this course.');
     }
     if (enrolment.status !== EnrollmentStatus.COMPLETED) {
-      throw new BadRequestException(
-        'Finish the course before claiming your certificate.',
-      );
+      // The stored status is set when a lesson is watched or an assessment passed, so a
+      // student who finished a course before that rule existed would be stuck with an
+      // enrolment that never got flagged. Re-check the same condition here rather than
+      // stranding them: for a course with no assessment, every lesson watched is
+      // completion, and this repairs the status on the way through.
+      const completed = await this.hasFinishedTrack(studentId, trackId);
+      if (!completed) {
+        throw new BadRequestException(
+          'Finish the course before claiming your certificate.',
+        );
+      }
+      await this.prisma.enrollment.update({
+        where: { id: enrolment.id },
+        data: { status: EnrollmentStatus.COMPLETED },
+      });
     }
 
     // Claiming twice hands back the existing certificate rather than minting a second
@@ -120,6 +132,35 @@ export class CredentialsService {
     });
 
     return this.toPublicShape(credential);
+  }
+
+  /**
+   * Whether the student has finished the course by the same rule the progress tracker
+   * applies: a course with a final assessment is finished by passing it (which sets the
+   * enrolment status directly), and a course without one is finished when every lesson
+   * has been watched.
+   */
+  private async hasFinishedTrack(studentId: string, trackId: string) {
+    const assessment = await this.prisma.trackAssessment.findUnique({
+      where: { trackId },
+      select: { id: true },
+    });
+    if (assessment) return false;
+
+    const topics = await this.prisma.topic.findMany({
+      where: { module: { trackId } },
+      select: { id: true },
+    });
+    if (topics.length === 0) return false;
+
+    const watched = await this.prisma.topicProgress.count({
+      where: {
+        userId: studentId,
+        watched: true,
+        topicId: { in: topics.map((t) => t.id) },
+      },
+    });
+    return watched >= topics.length;
   }
 
   async issue(studentId: string, levelId: string, evaluatorId: string) {

@@ -46,6 +46,8 @@ export class ProgressService {
       data: { status: EnrollmentStatus.IN_PROGRESS },
     });
 
+    await this.maybeCompleteTrack(actor.id, topic.module.trackId);
+
     await this.auditService.log({
       actor,
       action: `Completed watching topic "${topic.title}"`,
@@ -54,6 +56,50 @@ export class ProgressService {
     });
 
     return progress;
+  }
+
+  /**
+   * Marks a course complete once every lesson is watched — but only for courses that have
+   * no final assessment. Where an author wrote one, passing it stays the thing that
+   * completes the course (see QuizzesService), so the exam keeps its meaning.
+   *
+   * Without this, a course with no assessment could never be completed at all, which
+   * meant nobody enrolled in it could ever claim a certificate no matter how much of it
+   * they finished. Four of the seven published courses were in exactly that state.
+   */
+  private async maybeCompleteTrack(userId: string, trackId: string) {
+    const enrolment = await this.prisma.enrollment.findUnique({
+      where: { userId_trackId: { userId, trackId } },
+    });
+    if (!enrolment || enrolment.status === EnrollmentStatus.COMPLETED) return;
+
+    const assessment = await this.prisma.trackAssessment.findUnique({
+      where: { trackId },
+      select: { id: true },
+    });
+    if (assessment) return;
+
+    const topics = await this.prisma.topic.findMany({
+      where: { module: { trackId } },
+      select: { id: true },
+    });
+    // A course with no lessons at all is project-based; finishing it is not something
+    // watching can decide, so leave it to the capstone/submission flow.
+    if (topics.length === 0) return;
+
+    const watched = await this.prisma.topicProgress.count({
+      where: {
+        userId,
+        watched: true,
+        topicId: { in: topics.map((t) => t.id) },
+      },
+    });
+    if (watched < topics.length) return;
+
+    await this.prisma.enrollment.update({
+      where: { id: enrolment.id },
+      data: { status: EnrollmentStatus.COMPLETED },
+    });
   }
 
   async forTrack(userId: string, trackId: string) {

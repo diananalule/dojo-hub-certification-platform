@@ -114,6 +114,15 @@ export function CoursePlayer({ trackId }: { trackId: string }) {
 
   const isEnrolled = !!enrollment;
 
+  // Mirrors the rule the API enforces: an assessment-backed course is finished by passing
+  // it (which sets the status), and a course without one is finished when every lesson is
+  // watched. Checked here as well as on the status so a student who finished a course
+  // before that rule existed still sees the claim prompt.
+  const allLessonsWatched =
+    allTopics.length > 0 && allTopics.every((t) => watchedIds.has(t.id));
+  const courseFinished =
+    enrollment?.status === 'COMPLETED' || (!track.assessment && allLessonsWatched);
+
   return (
     <div className="space-y-6 animate-fadeIn">
       <div className="flex items-center justify-between">
@@ -147,7 +156,7 @@ export function CoursePlayer({ trackId }: { trackId: string }) {
         </div>
       )}
 
-      {isEnrolled && enrollment?.status === 'COMPLETED' && (
+      {isEnrolled && courseFinished && (
         <div className="rounded-2xl bg-gradient-to-br from-navy-950 to-navy-900 border border-navy-900 p-6 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
           <div className="flex items-start gap-3">
             <Award className="w-8 h-8 text-crimson-400 shrink-0" />
