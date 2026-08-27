@@ -2,7 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, XCircle, ShieldCheck } from 'lucide-react';
+import { CredentialDto } from '@dojo-hub/shared';
 import { api } from '@/lib/api-client';
+import { CertificateModal } from '@/components/student/CertificateModal';
 import DojoHubLogo from '@/components/DojoHubLogo';
 import { Skeleton } from '@/components/ui/Skeleton';
 
@@ -11,16 +13,8 @@ interface VerifyResult {
   integrityOk?: boolean;
   status?: string;
   reason?: string;
-  credential?: {
-    studentName: string;
-    /** Course title, or a level name for credentials issued under the older ladder. */
-    subjectTitle: string;
-    track: { title: string } | null;
-    level: { name: string } | null;
-    issuedAt: string;
-    hash: string;
-    status: string;
-  };
+  /** The full credential, so this page can render and download the certificate itself. */
+  credential?: CredentialDto;
 }
 
 export function VerifyCredentialView({ credentialId }: { credentialId: string }) {
@@ -31,7 +25,7 @@ export function VerifyCredentialView({ credentialId }: { credentialId: string })
 
   return (
     <div className="min-h-screen bg-navy-950 flex items-center justify-center p-6">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-8 space-y-6 text-center">
+      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6 text-center">
         <div className="flex justify-center">
           <DojoHubLogo size={56} />
         </div>
@@ -62,6 +56,16 @@ export function VerifyCredentialView({ credentialId }: { credentialId: string })
                 <p className="flex items-center justify-center gap-1.5 text-xs text-green-700">
                   <ShieldCheck className="w-4 h-4" /> Cryptographic integrity confirmed
                 </p>
+
+                {/*
+                  The certificate itself, with its download and print actions. This page is
+                  public and needs no sign-in, which is what makes it the right target for
+                  the link in the certificate email — it opens on a phone, tablet or laptop
+                  alike, and is the same page an employer reaches from the QR code.
+                */}
+                <div className="pt-2 text-left">
+                  <CertificateModal embedded credential={data.credential!} />
+                </div>
               </div>
             ) : (
               <div className="space-y-4">

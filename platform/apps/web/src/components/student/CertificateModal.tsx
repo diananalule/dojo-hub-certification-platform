@@ -6,7 +6,7 @@ import { jsPDF } from 'jspdf';
 import { CredentialDto } from '@dojo-hub/shared';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { subjectLine } from './certificate-subject';
+import { levelLine, subjectLine } from './certificate-subject';
 
 /** Horizontal wordmark — carries the Dojo Hub name, so no separate text heading is drawn. */
 const LOGO_SRC = '/dojohub-wordmark.jpeg';
@@ -15,6 +15,20 @@ const LOGO_SRC = '/dojohub-wordmark.jpeg';
 const PAPER = { hex: '#fdfcfa', rgb: [253, 252, 250] as const };
 
 /** Cursive stack for the signature line — falls back gracefully on Windows/macOS/Linux. */
+/**
+ * Who a course certificate is awarded by. Course certificates carry no evaluator or admin
+ * signature because nobody reviews them — the awarding authority is the organisation, so
+ * the CEO signs on its behalf.
+ *
+ * `image` is optional: if the file is absent the drawn signature falls back to the name
+ * rendered in a script face, so a missing asset never blocks a certificate.
+ */
+export const AWARDING_SIGNATORY = {
+  name: 'David Tusubira Sunday',
+  role: 'CEO, Director',
+  image: '/signature-ceo.png',
+} as const;
+
 const SIGNATURE_FONT = '"Segoe Script", "Brush Script MT", "Snell Roundhand", cursive';
 
 /** "1 September 2026" — unambiguous across locales, unlike 01/09/2026. */
@@ -27,6 +41,33 @@ function authenticationId(credential: CredentialDto): string {
 }
 
 type LoadedLogo = { dataUrl: string; width: number; height: number };
+type LoadedImage = LoadedLogo;
+
+/**
+ * Reads a static image into a data URL so jsPDF can embed it. Rejects on a missing or
+ * unreadable file, which callers treat as "draw the fallback instead" rather than an error.
+ */
+function loadImage(src: string): Promise<LoadedImage> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('No 2D context'));
+      ctx.drawImage(img, 0, 0);
+      resolve({
+        dataUrl: canvas.toDataURL('image/png'),
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+      });
+    };
+    img.onerror = () => reject(new Error(`Could not load ${src}`));
+    img.src = src;
+  });
+}
 
 /**
  * jsPDF embeds PNG pixel data uncompressed, so the full-size logo would add megabytes to
@@ -83,9 +124,22 @@ function loadLogo(): Promise<LoadedLogo> {
   });
 }
 
-export function CertificateModal({ credential, onClose }: { credential: CredentialDto; onClose: () => void }) {
+export function CertificateModal({
+  credential,
+  onClose,
+  embedded = false,
+}: {
+  credential: CredentialDto;
+  /** Omitted when embedded — there is no modal to close. */
+  onClose?: () => void;
+  /** Renders the certificate and its actions without the modal chrome, for the public
+   *  verification page, which anyone can open on any device without signing in. */
+  embedded?: boolean;
+}) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [logo, setLogo] = useState<LoadedLogo | null>(null);
+  const [signatureOk, setSignatureOk] = useState(true);
+  const [signature, setSignature] = useState<LoadedImage | null>(null);
 
   useEffect(() => {
     QRCode.toDataURL(credential.verifyUrl, { margin: 1, width: 240 }).then(setQrDataUrl);
@@ -98,10 +152,25 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
       .catch(() => setLogo(null));
   }, []);
 
+  useEffect(() => {
+    // Same tolerance for the signature: absent asset falls back to the script-face name.
+    loadImage(AWARDING_SIGNATORY.image)
+      .then(setSignature)
+      .catch(() => setSignature(null));
+  }, []);
+
   const issuedOn = formatIssueDate(credential.issuedAt);
   const authId = authenticationId(credential);
-  const signatoryName = credential.adminSignatureName ?? credential.evaluatorSignatureName;
-  const signatoryRole = credential.adminSignatureName ? 'Director, Dojo Hub (SMC)' : 'Lead Evaluator';
+  // A course certificate is awarded by the organisation, not by a reviewer — nobody
+  // graded it. Falling through to the signed names left "Awarded by" blank on every
+  // course certificate, since those carry neither signature.
+  const signatoryName =
+    credential.adminSignatureName ?? credential.evaluatorSignatureName ?? AWARDING_SIGNATORY.name;
+  const signatoryRole = credential.adminSignatureName
+    ? 'Director, Dojo Hub (SMC)'
+    : credential.evaluatorSignatureName
+      ? 'Lead Evaluator'
+      : AWARDING_SIGNATORY.role;
 
   const handleDownloadPdf = () => {
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -109,15 +178,30 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
     const h = doc.internal.pageSize.getHeight();
     const mid = w / 2;
 
-    // Cream field + double rule: prints cleanly and costs far less ink than a dark fill.
+    // Cream field: prints cleanly and costs far less ink than a dark fill.
     doc.setFillColor(PAPER.rgb[0], PAPER.rgb[1], PAPER.rgb[2]);
     doc.rect(0, 0, w, h, 'F');
-    doc.setDrawColor(30, 37, 51);
-    doc.setLineWidth(1.4);
-    doc.rect(9, 9, w - 18, h - 18);
-    doc.setDrawColor(220, 38, 38);
-    doc.setLineWidth(0.4);
-    doc.rect(12.5, 12.5, w - 25, h - 25);
+
+    // Soft crimson washes bleeding in from opposite corners, matching the on-screen
+    // certificate. Drawn as stacked translucent discs because jsPDF has no gradient
+    // primitive; each ring is faint enough that the edge reads as a fade, not a circle.
+    const wash = (cx: number, cy: number, maxR: number, alpha: number) => {
+      for (let i = 6; i >= 1; i--) {
+        doc.saveGraphicsState();
+        // @ts-expect-error -- GState is present at runtime; jsPDF's types omit it.
+        doc.setGState(new doc.GState({ opacity: alpha * (1 - i / 7) }));
+        doc.setFillColor(210, 15, 40);
+        doc.circle(cx, cy, (maxR * i) / 6, 'F');
+        doc.restoreGraphicsState();
+      }
+    };
+    wash(6, 6, 62, 0.5);
+    wash(w - 4, h - 2, 74, 0.42);
+
+    // A single hairline frame — restraint reads as formal; heavy borders read as a coupon.
+    doc.setDrawColor(210, 15, 40);
+    doc.setLineWidth(0.35);
+    doc.rect(10, 10, w - 20, h - 20);
 
     // The wordmark carries the Dojo Hub name, so no separate text heading is drawn.
     if (logo) {
@@ -126,15 +210,15 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
       doc.addImage(logo.dataUrl, 'PNG', mid - logoW / 2, 20, logoW, logoH);
     }
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(120, 128, 144);
-    doc.text('OFFICIAL VERIFIABLE CREDENTIAL', mid, 52, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(34);
+    doc.setTextColor(5, 7, 12);
+    doc.text('CERTIFICATE', mid, 62, { align: 'center', charSpace: 1.2 });
 
-    doc.setFont('times', 'bold');
-    doc.setFontSize(30);
-    doc.setTextColor(30, 37, 51);
-    doc.text('CERTIFICATE OF COMPLETION', mid, 70, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(210, 15, 40);
+    doc.text('OF COMPLETION', mid, 72, { align: 'center', charSpace: 2.6 });
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
@@ -143,7 +227,7 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
 
     doc.setFont('times', 'bolditalic');
     doc.setFontSize(30);
-    doc.setTextColor(220, 38, 38);
+    doc.setTextColor(210, 15, 40);
     doc.text(credential.studentName, mid, 97, { align: 'center' });
 
     doc.setDrawColor(210, 214, 222);
@@ -153,11 +237,12 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(140, 148, 162);
-    doc.text(credential.studentEmail, mid, 108, { align: 'center' });
+    const level = levelLine(credential);
+    if (level) doc.text(level.toUpperCase(), mid, 108, { align: 'center', charSpace: 0.6 });
 
     doc.setFontSize(9);
     doc.setTextColor(90, 98, 114);
-    doc.text('for successfully completing the requirements of', mid, 120, { align: 'center' });
+    doc.text('for successfully completing', mid, 120, { align: 'center' });
 
     doc.setFont('times', 'bold');
     doc.setFontSize(21);
@@ -192,7 +277,12 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
     doc.setDrawColor(30, 37, 51);
     doc.setLineWidth(0.4);
     doc.line(w - 88, ruleY, w - 32, ruleY);
-    if (signatoryName) {
+    if (signature) {
+      // Real signature, sized to sit on the rule without overflowing it.
+      const sigW = 34;
+      const sigH = Math.min(14, (signature.height / signature.width) * sigW);
+      doc.addImage(signature.dataUrl, 'PNG', w - 60 - sigW / 2, ruleY - sigH - 1, sigW, sigH);
+    } else if (signatoryName) {
       doc.setFont('times', 'italic');
       doc.setFontSize(17);
       doc.setTextColor(30, 37, 51);
@@ -206,12 +296,12 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(30, 37, 51);
-      doc.text(signatoryName, w - 60, nameY, { align: 'center' });
+      doc.text(signatoryRole, w - 60, nameY, { align: 'center' });
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
       doc.setTextColor(120, 128, 144);
-      doc.text(signatoryRole, w - 60, roleY, { align: 'center' });
+      doc.text(signatoryName, w - 60, roleY, { align: 'center' });
     }
 
     // --- Provenance strip ---
@@ -238,64 +328,122 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
     doc.save(`DojoHub_Certificate_${credential.studentName.replace(/\s+/g, '_')}_${credential.subjectTitle.replace(/\s+/g, '_')}.pdf`);
   };
 
-  return (
-    <Modal open onClose={onClose} title="Official Credential" maxWidth="max-w-3xl">
+  const sheet = (
+    <>
       <div
         id="print-certificate-canvas"
-        className="relative bg-[#fdfcfa] border-2 border-navy-950 rounded-lg overflow-hidden"
+        className="relative bg-[#fdfcfa] rounded-xl overflow-hidden ring-1 ring-navy-950/10 shadow-[0_2px_20px_rgba(5,7,12,0.06)]"
       >
-        <div className="absolute inset-[6px] border border-crimson-600/40 rounded pointer-events-none" />
+        {/*
+          Soft crimson bleeding in from opposite corners, echoing the organic wash on the
+          reference certificate. Pure CSS gradients rather than images so it stays crisp at
+          any size and adds nothing to the page weight.
+        */}
+        <div
+          aria-hidden
+          className="absolute -top-24 -left-24 w-80 h-80 rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(210,15,40,0.16) 0%, rgba(210,15,40,0) 70%)' }}
+        />
+        <div
+          aria-hidden
+          className="absolute -bottom-28 -right-24 w-96 h-96 rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(210,15,40,0.13) 0%, rgba(210,15,40,0) 70%)' }}
+        />
+        <div
+          aria-hidden
+          className="absolute top-1/3 -right-16 w-56 h-56 rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(5,7,12,0.05) 0%, rgba(5,7,12,0) 70%)' }}
+        />
 
-        <div className="relative px-8 py-7 text-center">
-          {/* Wordmark includes the Dojo Hub name, so no text heading follows it.
-              eslint-disable-next-line @next/next/no-img-element -- static asset, no optimisation needed in print view */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logo?.dataUrl ?? LOGO_SRC} alt="Dojo Hub" className="h-16 w-auto mx-auto" />
+        {/* Hairline inner frame — restraint reads as formal; a heavy border reads as a coupon. */}
+        <div className="absolute inset-3 border border-crimson-600/25 rounded-lg pointer-events-none" />
 
-          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-navy-400">Official Verifiable Credential</p>
+        <div className="relative px-8 sm:px-12 py-9 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static asset, print view */}
+          <img src={logo?.dataUrl ?? LOGO_SRC} alt="Dojo Hub" className="h-14 w-auto mx-auto" />
 
-          <h2 className="mt-5 text-2xl sm:text-3xl font-extrabold tracking-tight text-navy-950">
-            CERTIFICATE OF COMPLETION
+          {/* --- title, split across two weights like the reference --- */}
+          <h2 className="mt-7 text-4xl sm:text-5xl font-extrabold tracking-[0.06em] text-navy-950 leading-none">
+            CERTIFICATE
           </h2>
+          <p className="mt-1.5 text-xl sm:text-2xl tracking-[0.22em] text-crimson-600 font-semibold">
+            OF COMPLETION
+          </p>
 
-          <p className="mt-4 text-[12px] uppercase tracking-[0.2em] text-navy-400">Has been awarded to</p>
-          <p className="mt-2 text-3xl font-bold italic text-crimson-600">{credential.studentName}</p>
-          <div className="mx-auto mt-2 h-px w-2/3 bg-navy-200" />
-          <p className="mt-2 text-xs text-navy-400">{credential.studentEmail}</p>
+          <p className="mt-7 text-[11px] uppercase tracking-[0.24em] text-navy-400 font-semibold">
+            Has been awarded to
+          </p>
 
-          <p className="mt-5 text-xs text-navy-500">for successfully completing the requirements of</p>
-          <p className="mt-1 text-xl font-extrabold text-navy-950">{subjectLine(credential)}</p>
+          <p className="mt-3 text-3xl sm:text-4xl font-bold italic text-crimson-600 leading-tight">
+            {credential.studentName}
+          </p>
+          <div className="mx-auto mt-3 h-px w-3/4 bg-navy-950/25" />
+          {levelLine(credential) && (
+            <p className="mt-2.5 text-[11px] uppercase tracking-[0.18em] text-navy-400 font-semibold">
+              {levelLine(credential)}
+            </p>
+          )}
 
-          <div className="mt-7 grid grid-cols-3 items-end gap-4">
+          <p className="mt-6 text-xs text-navy-500">for successfully completing</p>
+          <p className="mt-1.5 text-2xl sm:text-[1.7rem] font-extrabold text-navy-950 leading-tight text-balance">
+            {subjectLine(credential)}
+          </p>
+
+          {/* --- date · seal · signature --- */}
+          <div className="mt-9 grid grid-cols-3 items-end gap-6">
             <div>
               <p className="text-sm text-navy-900">{issuedOn}</p>
-              <div className="mt-1 h-px bg-navy-950" />
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-navy-500">Date of Issuance</p>
+              <div className="mt-1.5 h-px bg-navy-950/70" />
+              <p className="mt-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-navy-500">
+                Date of Issuance
+              </p>
             </div>
 
+            {/* The QR is the seal: it is what actually proves the certificate, so it takes
+                the centre position the reference gives its medallion. */}
             <div className="flex flex-col items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element -- data: URL, next/image doesn't optimize these */}
-              {qrDataUrl && <img src={qrDataUrl} alt="Verification QR code" className="w-24 h-24" />}
+              <div className="relative p-2 rounded-xl bg-white ring-1 ring-navy-950/10 shadow-sm">
+                <div className="absolute -inset-1 rounded-2xl border border-crimson-600/25 pointer-events-none" />
+                {/* eslint-disable-next-line @next/next/no-img-element -- data: URL */}
+                {qrDataUrl && <img src={qrDataUrl} alt="Verification QR code" className="w-20 h-20 block" />}
+              </div>
+              <p className="mt-2 text-[9px] font-bold uppercase tracking-[0.16em] text-crimson-600">
+                Scan to verify
+              </p>
             </div>
 
             <div>
-              {signatoryName && (
-                <p className="text-lg text-navy-900 leading-tight" style={{ fontFamily: SIGNATURE_FONT }}>
-                  {signatoryName}
-                </p>
-              )}
-              <div className="mt-1 h-px bg-navy-950" />
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-navy-500">Awarded by</p>
+              {/* Real signature when the asset is present; the script-face name is the
+                  fallback so a missing file never leaves the line blank. */}
+              <div className="h-10 flex items-end justify-center">
+                {signatureOk ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- static asset
+                  <img
+                    src={AWARDING_SIGNATORY.image}
+                    alt=""
+                    className="max-h-10 w-auto object-contain"
+                    onError={() => setSignatureOk(false)}
+                  />
+                ) : (
+                  signatoryName && (
+                    <p className="text-xl text-navy-900 leading-none" style={{ fontFamily: SIGNATURE_FONT }}>
+                      {signatoryName}
+                    </p>
+                  )
+                )}
+              </div>
+              <div className="mt-1.5 h-px bg-navy-950/70" />
+              <p className="mt-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-navy-500">Awarded by</p>
               {signatoryName && (
                 <>
-                  <p className="mt-0.5 text-xs font-bold text-navy-950 leading-tight">{signatoryName}</p>
-                  <p className="text-[11px] text-navy-500 leading-tight">{signatoryRole}</p>
+                  <p className="mt-1 text-xs font-bold text-navy-950 leading-tight">{signatoryRole}</p>
+                  <p className="text-[11px] text-navy-500 leading-tight">{signatoryName}</p>
                 </>
               )}
             </div>
           </div>
 
-          <div className="mt-6 border-t border-navy-100 pt-3 text-left">
+          <div className="mt-8 border-t border-navy-950/10 pt-3 text-left">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
               <p className="text-[11px] font-mono text-navy-500">
                 <span className="text-navy-400">Authentication ID: </span>
@@ -318,6 +466,14 @@ export function CertificateModal({ credential, onClose }: { credential: Credenti
           Download PDF
         </Button>
       </div>
+    </>
+  );
+
+  if (embedded) return sheet;
+
+  return (
+    <Modal open onClose={onClose ?? (() => {})} title="Official Credential" maxWidth="max-w-3xl">
+      {sheet}
     </Modal>
   );
 }

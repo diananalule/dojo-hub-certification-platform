@@ -252,7 +252,7 @@ export interface CredentialDto {
   levelId: string | null;
   level: LevelDto | null;
   trackId: string | null;
-  track: { id: string; title: string; categoryName: string } | null;
+  track: { id: string; title: string; categoryName: string; difficulty: TrackDifficulty } | null;
   issuedAt: string;
   hash: string;
   verifyUrl: string;

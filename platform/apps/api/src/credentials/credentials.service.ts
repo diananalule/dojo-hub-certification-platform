@@ -125,8 +125,13 @@ export class CredentialsService {
             { label: 'Issued', value: issuedAt.toDateString() },
           ],
           ctaLabel: 'View and download your certificate',
-          ctaUrl: `${WEB}/certificates`,
-          outro: 'You can download it as a PDF to share or print.',
+          // The public verification page, not the dashboard: it opens on any phone,
+          // tablet or laptop with no sign-in, which is what a link in an email needs
+          // to do. It is the same page an employer reaches by scanning the QR code.
+          ctaUrl: `${WEB}/verify/${id}`,
+          outro:
+            'The link opens on any device without signing in, and the certificate can be ' +
+            'downloaded as a PDF from there.',
         },
       },
     });
@@ -199,8 +204,11 @@ export class CredentialsService {
             { label: 'Issued', value: new Date(credential.issuedAt).toDateString() },
           ],
           ctaLabel: 'View and download your certificate',
-          ctaUrl: `${WEB}/certificates`,
-          outro: 'You can download it as a PDF to share or print.',
+          // Public page, same reasoning as the course certificate email above.
+          ctaUrl: `${WEB}/verify/${id}`,
+          outro:
+            'The link opens on any device without signing in, and the certificate can be ' +
+            'downloaded as a PDF from there.',
         },
       },
     });
@@ -341,7 +349,12 @@ export class CredentialsService {
       passingScore: number;
     } | null;
     trackId?: string | null;
-    track?: { id: string; title: string; category: { name: string } } | null;
+    track?: {
+      id: string;
+      title: string;
+      difficulty: string;
+      category: { name: string };
+    } | null;
     issuedAt: Date;
     hash: string;
     status: CredentialStatus;
@@ -367,6 +380,7 @@ export class CredentialsService {
             id: credential.track.id,
             title: credential.track.title,
             categoryName: credential.track.category.name,
+            difficulty: credential.track.difficulty,
           }
         : null,
       issuedAt: credential.issuedAt,
