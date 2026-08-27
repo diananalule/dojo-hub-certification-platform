@@ -25,7 +25,7 @@ const PAPER = { hex: '#fdfcfa', rgb: [253, 252, 250] as const };
  */
 export const AWARDING_SIGNATORY = {
   name: 'David Tusubira Sunday',
-  role: 'CEO, Director',
+  role: 'CEO, Director - Dojo Hub',
   image: '/signature-ceo.png',
 } as const;
 
@@ -255,7 +255,6 @@ export function CertificateModal({
     const ruleY = 168;
     const labelY = 173;
     const nameY = 177.5;
-    const roleY = 181.5;
 
     doc.setDrawColor(30, 37, 51);
     doc.setLineWidth(0.4);
@@ -293,15 +292,11 @@ export function CertificateModal({
     doc.setTextColor(90, 98, 114);
     doc.text('AWARDED BY', w - 60, labelY, { align: 'center' });
     if (signatoryName) {
+      // The signature above already carries the name — repeating it here printed it twice.
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(30, 37, 51);
       doc.text(signatoryRole, w - 60, nameY, { align: 'center' });
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      doc.setTextColor(120, 128, 144);
-      doc.text(signatoryName, w - 60, roleY, { align: 'center' });
     }
 
     // --- Provenance strip ---
@@ -407,9 +402,6 @@ export function CertificateModal({
                 {/* eslint-disable-next-line @next/next/no-img-element -- data: URL */}
                 {qrDataUrl && <img src={qrDataUrl} alt="Verification QR code" className="w-20 h-20 block" />}
               </div>
-              <p className="mt-2 text-[9px] font-bold uppercase tracking-[0.16em] text-crimson-600">
-                Scan to verify
-              </p>
             </div>
 
             <div>
@@ -435,10 +427,7 @@ export function CertificateModal({
               <div className="mt-1.5 h-px bg-navy-950/70" />
               <p className="mt-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-navy-500">Awarded by</p>
               {signatoryName && (
-                <>
-                  <p className="mt-1 text-xs font-bold text-navy-950 leading-tight">{signatoryRole}</p>
-                  <p className="text-[11px] text-navy-500 leading-tight">{signatoryName}</p>
-                </>
+                <p className="mt-1 text-xs font-bold text-navy-950 leading-tight">{signatoryRole}</p>
               )}
             </div>
           </div>
