@@ -15,10 +15,12 @@ name: Keep services warm
 
 on:
   schedule:
-    # Every 10 minutes during Kampala working hours. GitHub does not guarantee punctual
-    # scheduling and can run these late under load, so the interval is well inside the
-    # ~15 minute hibernation window rather than close to it.
-    - cron: '*/10 4-18 * * *'
+    # Every 5 minutes — the shortest interval GitHub accepts. Even this is not dependable:
+    # scheduled runs on free repos are routinely delayed 10-30 minutes and are dropped
+    # entirely when GitHub is busy, which is longer than the ~15 minute hibernation window
+    # this is meant to stay inside. Treat it as a backstop, not the mechanism; a dedicated
+    # uptime pinger (UptimeRobot, cron-job.org) actually holds the services open.
+    - cron: '*/5 4-18 * * *'
   workflow_dispatch: # so it can be triggered by hand before a demo
 
 concurrency:
