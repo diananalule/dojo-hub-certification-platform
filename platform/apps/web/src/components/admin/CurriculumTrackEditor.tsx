@@ -16,6 +16,7 @@ import { cn } from '../ui/cn';
 import { FileDropzone } from '../student/FileDropzone';
 import { DurationInput } from './DurationInput';
 import { TopicPreview } from './TopicPreview';
+import { ModuleQuizEditor } from './ModuleQuizEditor';
 
 type Module = TrackDto['modules'][number];
 
@@ -363,6 +364,7 @@ function VideoSourceInput({ videoUrl, onVideoUrlChange }: { videoUrl: string; on
 
 function ModuleDetail({
   moduleId,
+  trackId,
   module: mod,
   onChanged,
   draft,
@@ -483,6 +485,11 @@ function ModuleDetail({
             </div>
           ),
         )}
+      </div>
+
+      <div>
+        <p className="text-[12px] font-mono uppercase text-navy-400 font-bold mb-2">Module Quiz</p>
+        <ModuleQuizEditor mod={mod} trackId={trackId} />
       </div>
 
       <div className="bg-white rounded-xl border border-navy-200 p-3 space-y-2">

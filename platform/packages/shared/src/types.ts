@@ -91,6 +91,31 @@ export interface ModuleDto {
   topics: TopicDto[];
   competencies: CompetencyDto[];
   hasQuiz: boolean;
+  /**
+   * Present only on the admin fetch (/tracks/:id/admin), which deliberately keeps the
+   * correct answers so a quiz can be edited. The student-facing routes strip them.
+   */
+  quiz?: ModuleQuizAdminDto | null;
+}
+
+export interface QuizQuestionAdminDto {
+  id: string;
+  type: QuizQuestionType;
+  order: number;
+  question: string | null;
+  options: string[];
+  correctIndex: number | null;
+  explanation: string | null;
+  prompt: string | null;
+  guidelines: string | null;
+}
+
+export interface ModuleQuizAdminDto {
+  id: string;
+  moduleId: string;
+  title: string;
+  passThreshold: number;
+  questions: QuizQuestionAdminDto[];
 }
 
 export interface TrackDto {
