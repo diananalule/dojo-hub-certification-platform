@@ -12,6 +12,117 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Read-only inventory of what is actually in the database, so seed data can be
+   * identified before anything is deleted.
+   *
+   * "Seed" is decided by the @dojo.edu domain the seed script uses for every account it
+   * creates, and by whether a course was one of the three it publishes. Nothing real uses
+   * that domain, so the split is exact rather than a guess.
+   *
+   * Submissions are counted against the seed accounts explicitly rather than inferred from
+   * the users, because Submission.studentId carries no foreign key — deleting a seeded
+   * student would leave their submissions behind, still counted in the evaluator queue.
+   */
+  async inventory() {
+    const SEED_DOMAIN = '@dojo.edu';
+    const SEED_COURSE_TITLES = [
+      'The Hardware Course',
+      'The Software Course',
+      'The Data Science Course',
+    ];
+
+    const [users, tracks, submissions, credentials, enrolments] = await Promise.all([
+      this.prisma.user.findMany({
+        select: { id: true, name: true, email: true, role: true, createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.track.findMany({
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          _count: { select: { modules: true } },
+        },
+        orderBy: { title: 'asc' },
+      }),
+      this.prisma.submission.findMany({
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          studentId: true,
+          title: true,
+          submittedAt: true,
+          evaluator: { select: { name: true } },
+        },
+        orderBy: { submittedAt: 'asc' },
+      }),
+      this.prisma.credential.findMany({
+        select: { id: true, studentId: true, issuedAt: true, trackId: true, levelId: true },
+      }),
+      this.prisma.enrollment.findMany({ select: { id: true, userId: true, trackId: true } }),
+    ]);
+
+    const seedUserIds = new Set(
+      users.filter((u) => u.email.endsWith(SEED_DOMAIN)).map((u) => u.id),
+    );
+    const seedTrackIds = new Set(
+      tracks.filter((t) => SEED_COURSE_TITLES.includes(t.title)).map((t) => t.id),
+    );
+
+    // A submission whose student no longer exists is debris from an earlier deletion —
+    // invisible in the user list but still inflating the queue counts.
+    const liveUserIds = new Set(users.map((u) => u.id));
+
+    return {
+      accounts: users.map((u) => ({
+        ...u,
+        isSeed: seedUserIds.has(u.id),
+      })),
+      courses: tracks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        status: t.status,
+        moduleCount: t._count.modules,
+        isSeed: seedTrackIds.has(t.id),
+        enrolments: enrolments.filter((e) => e.trackId === t.id).length,
+      })),
+      submissions: submissions.map((sub) => ({
+        id: sub.id,
+        title: sub.title,
+        type: sub.type,
+        status: sub.status,
+        submittedAt: sub.submittedAt,
+        evaluatorName: sub.evaluator?.name ?? null,
+        owner: seedUserIds.has(sub.studentId)
+          ? 'seed'
+          : liveUserIds.has(sub.studentId)
+            ? 'real'
+            : 'orphaned',
+      })),
+      credentials: credentials.map((c) => ({
+        id: c.id,
+        issuedAt: c.issuedAt,
+        kind: c.trackId ? 'course' : 'level',
+        owner: seedUserIds.has(c.studentId)
+          ? 'seed'
+          : liveUserIds.has(c.studentId)
+            ? 'real'
+            : 'orphaned',
+      })),
+      totals: {
+        accounts: users.length,
+        seedAccounts: seedUserIds.size,
+        courses: tracks.length,
+        seedCourses: seedTrackIds.size,
+        submissions: submissions.length,
+        enrolments: enrolments.length,
+        credentials: credentials.length,
+      },
+    };
+  }
+
   async platformMetrics() {
     const [
       totalStudents,

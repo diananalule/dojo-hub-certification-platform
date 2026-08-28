@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { StatTile } from '@/components/ui/StatTile';
 import { Button } from '@/components/ui/Button';
 import { Skeleton, SkeletonTile } from '@/components/ui/Skeleton';
+import { DataInventory } from '@/components/admin/DataInventory';
 
 interface UsageReportData {
   metrics: PlatformMetricsDto;
@@ -128,6 +129,8 @@ export default function AdminMetricsPage() {
           </div>
         </Card>
       </div>
+
+      <DataInventory />
     </div>
   );
 }

@@ -18,6 +18,13 @@ export class ReportsController {
     return this.reportsService.platformMetrics();
   }
 
+  /** Read-only: what is actually in the database, with seed data flagged. */
+  @Roles(UserRole.ADMIN)
+  @Get('inventory')
+  inventory() {
+    return this.reportsService.inventory();
+  }
+
   @Roles(UserRole.ADMIN)
   @Get('usage-report')
   usageReport() {
