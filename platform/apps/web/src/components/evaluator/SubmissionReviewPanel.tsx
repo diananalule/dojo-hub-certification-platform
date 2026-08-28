@@ -21,9 +21,24 @@ function EvidenceList({ submission }: { submission: SubmissionDto }) {
           <p className="text-[12px] font-mono uppercase text-navy-400 font-bold mb-1">Submitted Links</p>
           <div className="space-y-1.5">
             {submission.links.map((l, i) => (
-              <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs bg-white border border-navy-100 rounded-lg px-3 py-2 hover:border-crimson-300">
-                <ExternalLink className="w-3.5 h-3.5 text-navy-400 shrink-0" />
-                <span className="truncate">{l.description || l.url}</span>
+              /* The URL is always shown, not just the description. An evaluator grading a
+                 submission needs to see where a link actually goes — whether it is the
+                 GitHub repo it claims to be — before deciding to open it, and the
+                 description alone gave them no way to tell. */
+              <a
+                key={i}
+                href={l.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-start gap-2 text-xs bg-white border border-navy-100 rounded-lg px-3 py-2 hover:border-crimson-300"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-navy-400 shrink-0 mt-0.5" />
+                <span className="min-w-0 flex-1">
+                  {l.description && (
+                    <span className="block truncate font-semibold text-navy-800">{l.description}</span>
+                  )}
+                  <span className="block break-all font-mono text-[11px] text-crimson-700">{l.url}</span>
+                </span>
               </a>
             ))}
           </div>
