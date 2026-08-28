@@ -146,8 +146,15 @@ export function SyllabusPanel({
                   onClick={() => onOpenQuiz(mod.id)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-navy-50 transition-colors bg-navy-100/40"
                 >
-                  <ClipboardList className="w-4 h-4 text-navy-600" />
-                  <span className="text-xs font-semibold text-navy-800">Take Chapter Quiz (optional self-check)</span>
+                  <ClipboardList className="w-4 h-4 text-navy-600 shrink-0" />
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold text-navy-800">Chapter Quiz</span>
+                    <span className="block text-[11px] text-navy-500">
+                      {mod.quizQuestionCount
+                        ? `${mod.quizQuestionCount} question${mod.quizQuestionCount === 1 ? '' : 's'} · optional`
+                        : 'optional self-check'}
+                    </span>
+                  </span>
                 </button>
               )}
             </div>

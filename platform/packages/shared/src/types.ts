@@ -91,6 +91,8 @@ export interface ModuleDto {
   topics: TopicDto[];
   competencies: CompetencyDto[];
   hasQuiz: boolean;
+  /** How many questions the quiz holds, so the syllabus can say so before you start it. */
+  quizQuestionCount?: number;
   /**
    * Present only on the admin fetch (/tracks/:id/admin), which deliberately keeps the
    * correct answers so a quiz can be edited. The student-facing routes strip them.

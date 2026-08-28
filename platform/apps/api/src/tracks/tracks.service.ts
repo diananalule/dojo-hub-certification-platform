@@ -155,6 +155,7 @@ export class TracksService {
       modules: track.modules.map(({ quiz, ...m }) => ({
         ...m,
         hasQuiz: !!quiz,
+        quizQuestionCount: quiz?.questions.length ?? 0,
         topics: m.topics.map((t) => {
           const isFreePreview = t.id === freeTopicId;
           return {
@@ -489,7 +490,11 @@ export class TracksService {
       ...track,
       modules: track.modules.map((m) => {
         const { quiz, ...rest } = m;
-        return { ...rest, hasQuiz: !!quiz };
+        return {
+          ...rest,
+          hasQuiz: !!quiz,
+          quizQuestionCount: quiz?.questions.length ?? 0,
+        };
       }),
       assessment: track.assessment
         ? {
