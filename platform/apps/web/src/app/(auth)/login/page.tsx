@@ -21,6 +21,20 @@ type FormValues = z.infer<typeof schema>;
 
 const ROLE_HOME: Record<string, string> = { STUDENT: '/home', EVALUATOR: '/queue', ADMIN: '/metrics' };
 
+/**
+ * Where to go after signing in. `next` carries the page someone was trying to reach —
+ * a course they clicked "enrol" on, say — so they arrive back there instead of on a
+ * dashboard, having lost what they came for.
+ *
+ * Only same-origin paths are honoured. A value starting with "//" is protocol-relative
+ * and would send them to another site entirely, so it is rejected along with anything
+ * that is not a plain path.
+ */
+function safeNext(next: string | null): string | null {
+  if (!next || !next.startsWith('/') || next.startsWith('//')) return null;
+  return next;
+}
+
 export default function LoginPage() {
   return (
     <Suspense fallback={null}>
@@ -64,7 +78,7 @@ function LoginForm() {
     setResendState('idle');
     try {
       const user = await login(values.email, values.password);
-      router.replace(ROLE_HOME[user.role] ?? '/home');
+      router.replace(safeNext(params.get('next')) ?? ROLE_HOME[user.role] ?? '/home');
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Something went wrong. Please try again.');
     }

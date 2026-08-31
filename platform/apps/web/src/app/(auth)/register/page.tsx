@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,9 +22,19 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
+// useSearchParams needs a Suspense boundary in this Next.js version.
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const { register: registerUser } = useAuth();
   const router = useRouter();
+  const params = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const {
     register,
@@ -37,7 +47,13 @@ export default function RegisterPage() {
     try {
       await registerUser(values.name, values.email, values.password, values.role);
       // Account created but not signed in — send them to sign in explicitly.
-      router.replace(`/login?registered=1&email=${encodeURIComponent(values.email)}`);
+      // Preserve where they were going, so signing in after verification returns them
+      // to the course they were trying to enrol in rather than a bare dashboard.
+      const next = params.get('next');
+      router.replace(
+        `/login?registered=1&email=${encodeURIComponent(values.email)}` +
+          (next ? `&next=${encodeURIComponent(next)}` : ''),
+      );
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Something went wrong. Please try again.');
     }
@@ -118,7 +134,10 @@ export default function RegisterPage() {
       </form>
 
       <div className="text-center pt-3 border-t border-black/[0.06]">
-        <Link href="/login" className="link-sweep text-sm font-semibold text-crimson-600 hover:text-crimson-700">
+        <Link
+          href={`/login${params.get('next') ? `?next=${encodeURIComponent(params.get('next')!)}` : ''}`}
+          className="link-sweep text-sm font-semibold text-crimson-600 hover:text-crimson-700"
+        >
           Already have an account? Sign In
         </Link>
       </div>

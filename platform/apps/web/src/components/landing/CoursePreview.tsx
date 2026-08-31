@@ -84,6 +84,7 @@ export function CoursePreview({
 
   // The API marks exactly one lesson as the giveaway; the UI never picks it itself.
   const freeTopic = track.modules.flatMap((m) => m.topics).find((t) => t.isFreePreview) ?? null;
+  const coursePath = `/courses/${track.id}`;
   const lessonCount = track.modules.reduce((sum, m) => sum + m.topics.length, 0);
   const totalSeconds = track.modules.reduce(
     (sum, m) => sum + m.topics.reduce((s, t) => s + t.durationSeconds, 0),
@@ -228,12 +229,21 @@ export function CoursePreview({
                 </Button>
               ) : (
                 <>
-                  <Link href="/register" className="block">
+                  {/* Both links carry this course as `next`, so someone who signs up or
+                      signs in from here is returned to it rather than being dropped on a
+                      dashboard having lost the course they came for. */}
+                  <Link href={`/register?next=${encodeURIComponent(coursePath)}`} className="block">
                     <Button className="w-full">Sign up to enrol</Button>
                   </Link>
                   <p className="text-xs text-navy-500 text-center">
-                    Already have an account?{' '}
-                    <Link href="/login" className="font-bold text-crimson-600 hover:underline">
+                    An account keeps your progress and carries your name on the certificate.
+                  </p>
+                  <p className="text-xs text-navy-500 text-center">
+                    Already have one?{' '}
+                    <Link
+                      href={`/login?next=${encodeURIComponent(coursePath)}`}
+                      className="font-bold text-crimson-600 hover:underline"
+                    >
                       Sign in
                     </Link>
                   </p>
@@ -291,7 +301,7 @@ export function CoursePreview({
                   Enroll in this course
                 </Button>
               ) : (
-                <Link href="/register" className="inline-block mt-4">
+                <Link href={`/register?next=${encodeURIComponent(coursePath)}`} className="inline-block mt-4">
                   <Button>Create a free account</Button>
                 </Link>
               )}
