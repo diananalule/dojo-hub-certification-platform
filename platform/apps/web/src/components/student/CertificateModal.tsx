@@ -31,6 +31,27 @@ export const AWARDING_SIGNATORY = {
 
 const SIGNATURE_FONT = '"Segoe Script", "Brush Script MT", "Snell Roundhand", cursive';
 
+/**
+ * Centres letter-spaced text in the PDF.
+ *
+ * jsPDF's `align: 'center'` measures the string without the per-character spacing it is
+ * about to add, so anything drawn with `charSpace` renders wider than the width used to
+ * position it and ends up pushed right of centre — by half the total added spacing. The
+ * wider the tracking, the further it drifts, which is why the title lines did not sit
+ * over each other. Measuring the real width and placing it left-aligned avoids the whole
+ * problem.
+ */
+function centredText(
+  doc: jsPDF,
+  text: string,
+  centreX: number,
+  y: number,
+  charSpace = 0,
+) {
+  const width = doc.getTextWidth(text) + charSpace * Math.max(0, text.length - 1);
+  doc.text(text, centreX - width / 2, y, { charSpace });
+}
+
 /** "1 September 2026" — unambiguous across locales, unlike 01/09/2026. */
 function formatIssueDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -79,6 +100,30 @@ const LOGO_PDF_WIDTH_PX = 700;
 /** Pixels at least this bright on every channel count as the wordmark's backdrop. */
 const BACKDROP_THRESHOLD = 232;
 
+/** Bounding box of everything that is not backdrop, so the logo can be cropped to its mark. */
+function inkBounds(frame: ImageData, width: number, height: number) {
+  const px = frame.data;
+  let minX = width;
+  let maxX = -1;
+  let minY = height;
+  let maxY = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const isInk =
+        px[i] < BACKDROP_THRESHOLD ||
+        px[i + 1] < BACKDROP_THRESHOLD ||
+        px[i + 2] < BACKDROP_THRESHOLD;
+      if (!isInk) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  return maxX < 0 ? null : { minX, maxX, minY, maxY };
+}
+
 /**
  * Loads the wordmark, downscales it, and repaints its off-white backdrop to the
  * certificate's paper colour — the source is a JPEG (no alpha), so without this it
@@ -116,6 +161,27 @@ function loadLogo(): Promise<LoadedLogo> {
         }
       }
       ctx.putImageData(frame, 0, 0);
+
+      // The wordmark ships with wide empty margins baked in — roughly 18% of its width
+      // and 25% of its height on each side. Placed as-is it centres correctly but draws
+      // small, floating in its own padding. Cropping to the ink means the mark fills the
+      // space it is given and is centred on the artwork rather than on the canvas.
+      const bounds = inkBounds(frame, width, height);
+      if (bounds) {
+        const cropW = bounds.maxX - bounds.minX + 1;
+        const cropH = bounds.maxY - bounds.minY + 1;
+        const cropped = document.createElement('canvas');
+        cropped.width = cropW;
+        cropped.height = cropH;
+        const cctx = cropped.getContext('2d');
+        if (cctx) {
+          cctx.fillStyle = PAPER.hex;
+          cctx.fillRect(0, 0, cropW, cropH);
+          cctx.drawImage(canvas, bounds.minX, bounds.minY, cropW, cropH, 0, 0, cropW, cropH);
+          resolve({ dataUrl: cropped.toDataURL('image/png'), width: cropW, height: cropH });
+          return;
+        }
+      }
 
       resolve({ dataUrl: canvas.toDataURL('image/png'), width, height });
     };
@@ -213,12 +279,12 @@ export function CertificateModal({
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(34);
     doc.setTextColor(5, 7, 12);
-    doc.text('CERTIFICATE', mid, 62, { align: 'center', charSpace: 1.2 });
+    centredText(doc, 'CERTIFICATE', mid, 62, 1.2);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(210, 15, 40);
-    doc.text('OF COMPLETION', mid, 72, { align: 'center', charSpace: 2.6 });
+    centredText(doc, 'OF COMPLETION', mid, 72, 2.6);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
@@ -238,7 +304,7 @@ export function CertificateModal({
     doc.setFontSize(8);
     doc.setTextColor(140, 148, 162);
     const level = levelLine(credential);
-    if (level) doc.text(level.toUpperCase(), mid, 108, { align: 'center', charSpace: 0.6 });
+    if (level) centredText(doc, level.toUpperCase(), mid, 108, 0.6);
 
     doc.setFontSize(9);
     doc.setTextColor(90, 98, 114);
@@ -358,14 +424,17 @@ export function CertificateModal({
           <img src={logo?.dataUrl ?? LOGO_SRC} alt="Dojo Hub" className="h-14 w-auto mx-auto" />
 
           {/* --- title, split across two weights like the reference --- */}
-          <h2 className="mt-7 text-4xl sm:text-5xl font-extrabold tracking-[0.06em] text-navy-950 leading-none">
+          <h2 className="mt-7 text-4xl sm:text-5xl font-extrabold tracking-[0.06em] text-navy-950 leading-none"
+            style={{ marginRight: '-0.06em' }}>
             CERTIFICATE
           </h2>
-          <p className="mt-1.5 text-xl sm:text-2xl tracking-[0.22em] text-crimson-600 font-semibold">
+          <p className="mt-1.5 text-xl sm:text-2xl tracking-[0.22em] text-crimson-600 font-semibold"
+            style={{ marginRight: '-0.22em' }}>
             OF COMPLETION
           </p>
 
-          <p className="mt-7 text-[11px] uppercase tracking-[0.24em] text-navy-400 font-semibold">
+          <p className="mt-7 text-[11px] uppercase tracking-[0.24em] text-navy-400 font-semibold"
+            style={{ marginRight: '-0.24em' }}>
             Has been awarded to
           </p>
 
@@ -374,7 +443,8 @@ export function CertificateModal({
           </p>
           <div className="mx-auto mt-3 h-px w-3/4 bg-navy-950/25" />
           {levelLine(credential) && (
-            <p className="mt-2.5 text-[11px] uppercase tracking-[0.18em] text-navy-400 font-semibold">
+            <p className="mt-2.5 text-[11px] uppercase tracking-[0.18em] text-navy-400 font-semibold"
+              style={{ marginRight: '-0.18em' }}>
               {levelLine(credential)}
             </p>
           )}
