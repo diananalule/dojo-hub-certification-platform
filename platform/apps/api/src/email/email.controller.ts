@@ -39,7 +39,7 @@ export class EmailController {
           { label: 'Time', value: new Date().toUTCString() },
         ],
         ctaLabel: 'Open Dojo Hub Learning Platform',
-        ctaUrl: 'https://dojo-hub-web.onrender.com',
+        ctaUrl: process.env.WEB_URL ?? 'https://dojo-hub-web.onrender.com',
         outro: 'No action is needed — this message was sent to confirm delivery.',
       },
     });

@@ -19,6 +19,13 @@ import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RequestUser } from '../common/types/request-user.interface';
 
+/*
+ * The onrender.com fallback is deliberate, not a leftover. Certificates print and encode
+ * their verification link at the moment they are issued, so every PDF already in a
+ * student's hands points at whichever host was configured then. That address has to keep
+ * resolving for those to stay verifiable, which is why the platform moved to
+ * learn.dojohubug.com by *adding* a domain rather than renaming the service.
+ */
 const WEB = process.env.WEB_URL ?? 'https://dojo-hub-web.onrender.com';
 
 @Injectable()
