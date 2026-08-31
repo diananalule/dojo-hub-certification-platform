@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
-import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import DojoHubLogo from '@/components/DojoHubLogo';
 
@@ -44,22 +43,6 @@ export function PublicNav({ initiallySignedIn = false }: { initiallySignedIn?: b
           <Link href="/#how-it-works" className="hidden md:block text-sm font-semibold text-navy-600 hover:text-crimson-600 transition-colors">
             How it works
           </Link>
-
-          {/* The nav already carries three buttons, so search is an icon here rather than a
-              field — it jumps to the real one and focuses it, which keeps the bar from
-              overflowing on smaller screens. */}
-          <a
-            href="/#courses"
-            aria-label="Search courses"
-            title="Search courses"
-            onClick={() => {
-              // Runs after the hash navigation, so the field is on screen when focused.
-              setTimeout(() => document.getElementById('course-search')?.focus(), 120);
-            }}
-            className="p-2 rounded-lg text-navy-600 hover:text-crimson-600 hover:bg-navy-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson-500/60"
-          >
-            <Search className="w-4 h-4" />
-          </a>
 
           {/* Sign In and Create Account stay visible for everyone, signed in or not, so the
               way into an account is always on screen where a visitor expects it. A signed-in
