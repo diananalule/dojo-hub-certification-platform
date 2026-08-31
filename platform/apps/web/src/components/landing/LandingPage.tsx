@@ -2,7 +2,20 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Award, BookOpen, CheckCircle2, QrCode, Search, ShieldCheck, TriangleAlert, Users, X } from 'lucide-react';
+import {
+  Award,
+  BookOpen,
+  CheckCircle2,
+  GraduationCap,
+  Layers,
+  PlayCircle,
+  QrCode,
+  Search,
+  ShieldCheck,
+  TriangleAlert,
+  Users,
+  X,
+} from 'lucide-react';
 import { CategoryDto, TrackSummaryDto } from '@dojo-hub/shared';
 import { useCategories, useTracks } from '@/lib/hooks';
 import { TrackCard } from '@/components/student/TrackCard';
@@ -132,21 +145,27 @@ export function LandingPage({
       </section>
 
       {/* ------------------------------------------------------------ stats */}
-      <section className="border-y border-black/[0.06] bg-navy-50/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <section className="border-y border-crimson-100 bg-crimson-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-6">
           {[
-            { value: tracks.length, label: 'Courses available' },
-            { value: lessonCount, label: 'Lessons to work through' },
-            { value: categories.length, label: 'Disciplines' },
-            { value: '100%', label: 'Supervisor reviewed' },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <p className="text-2xl sm:text-3xl font-extrabold text-navy-950 tabular-nums">
-                {stat.value}
-              </p>
-              <p className="text-xs text-navy-500 mt-0.5">{stat.label}</p>
-            </div>
-          ))}
+            { icon: GraduationCap, value: tracks.length, label: 'Courses available' },
+            { icon: PlayCircle, value: lessonCount, label: 'Lessons to work through' },
+            { icon: Layers, value: categories.length, label: 'Disciplines' },
+            { icon: ShieldCheck, value: '100%', label: 'Supervisor reviewed' },
+          ].map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div key={stat.label} className="text-center">
+                <span className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white shadow-sm ring-1 ring-crimson-100">
+                  <Icon className="w-6 h-6 text-crimson-600" />
+                </span>
+                <p className="mt-3 text-3xl sm:text-4xl font-extrabold text-navy-950 tabular-nums leading-none">
+                  {stat.value}
+                </p>
+                <p className="mt-1.5 text-xs sm:text-sm text-navy-600">{stat.label}</p>
+              </div>
+            );
+          })}
         </div>
       </section>
 
