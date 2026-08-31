@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Award, BookOpen, CheckCircle2, QrCode, ShieldCheck, TriangleAlert, Users } from 'lucide-react';
+import { Award, BookOpen, CheckCircle2, QrCode, Search, ShieldCheck, TriangleAlert, Users, X } from 'lucide-react';
 import { CategoryDto, TrackSummaryDto } from '@dojo-hub/shared';
 import { useCategories, useTracks } from '@/lib/hooks';
 import { TrackCard } from '@/components/student/TrackCard';
@@ -56,12 +56,31 @@ export function LandingPage({
   // latter for a failed request told visitors the platform had no courses at all.
   const failed = (isError || categoriesError) && tracks.length === 0;
 
+  const [query, setQuery] = useState('');
+  const search = query.trim().toLowerCase();
+
+  // Title, blurb and discipline are all searched: someone looking for "python" may be
+  // typing a tool that only appears in the description, and someone typing "hardware"
+  // means the category.
+  const matches = useMemo(
+    () =>
+      !search
+        ? tracks
+        : tracks.filter((t) =>
+            [t.title, t.description, t.category.name]
+              .join(' ')
+              .toLowerCase()
+              .includes(search),
+          ),
+    [tracks, search],
+  );
+
   const rows = useMemo(
     () =>
       categories
-        .map((c) => ({ category: c, tracks: tracks.filter((t) => t.category.id === c.id) }))
+        .map((c) => ({ category: c, tracks: matches.filter((t) => t.category.id === c.id) }))
         .filter((r) => r.tracks.length > 0),
-    [categories, tracks],
+    [categories, matches],
   );
 
   const lessonCount = tracks.reduce((sum, t) => sum + t.topicCount, 0);
@@ -133,13 +152,37 @@ export function LandingPage({
 
       {/* ---------------------------------------------------------- courses */}
       <section id="courses" className="max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-16 space-y-10">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-navy-950">
-            Explore our courses
-          </h2>
-          <p className="text-navy-500 mt-1.5">
-            Read the full syllabus before you sign up — you only need an account to enrol.
-          </p>
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-navy-950">
+              Explore our courses
+            </h2>
+            <p className="text-navy-500 mt-1.5">
+              Read the full syllabus before you sign up — you only need an account to enrol.
+            </p>
+          </div>
+
+          <div className="relative w-full lg:w-80 shrink-0">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-400 pointer-events-none" />
+            <input
+              id="course-search"
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search courses"
+              aria-label="Search courses"
+              className="input input-icon input-icon-right"
+            />
+            {query && (
+              <button
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-navy-400 hover:text-navy-950 hover:bg-navy-100"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {isLoading ? (
@@ -164,6 +207,19 @@ export function LandingPage({
                 Refresh the page
               </button>
             </div>
+          </div>
+        ) : search && rows.length === 0 ? (
+          <div className="rounded-2xl border border-black/[0.07] bg-navy-50/60 p-8 text-center">
+            <p className="font-bold text-navy-950">No courses match “{query.trim()}”</p>
+            <p className="text-sm text-navy-500 mt-1">
+              Try a different word, or clear the search to see everything.
+            </p>
+            <button
+              onClick={() => setQuery('')}
+              className="mt-4 text-sm font-bold text-crimson-600 hover:underline"
+            >
+              Clear search
+            </button>
           </div>
         ) : rows.length === 0 ? (
           <p className="text-navy-400">No courses have been published yet. Check back shortly.</p>
