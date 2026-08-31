@@ -23,14 +23,14 @@ export function PublicNav({ initiallySignedIn = false }: { initiallySignedIn?: b
 
   return (
     <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-black/[0.06]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2.5 min-w-0">
-          <DojoHubLogo size={34} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 sm:h-20 flex items-center justify-between gap-4">
+        <Link href="/" className="flex items-center gap-3 min-w-0">
+          <DojoHubLogo size={44} />
           <span className="min-w-0">
-            <span className="block font-extrabold tracking-tight text-navy-950 leading-none truncate">
+            <span className="block text-xl sm:text-2xl font-extrabold tracking-tight text-navy-950 leading-none truncate">
               DOJO <span className="text-crimson-600">HUB</span>
             </span>
-            <span className="block text-[11px] font-mono uppercase tracking-[0.14em] text-navy-400 leading-none mt-0.5">
+            <span className="block text-[12px] sm:text-[13px] font-mono uppercase tracking-[0.14em] text-navy-400 leading-none mt-1">
               Learning Platform
             </span>
           </span>
