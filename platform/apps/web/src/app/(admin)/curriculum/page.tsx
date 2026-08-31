@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { FileDropzone, type UploadedFile } from '@/components/student/FileDropzone';
+import { EmojiPicker } from '@/components/admin/EmojiPicker';
 
 export default function CurriculumProgramsPage() {
   const queryClient = useQueryClient();
@@ -81,7 +82,7 @@ export default function CurriculumProgramsPage() {
             </select>
           </Field>
           <Field label="Launcher Emoji">
-            <input value={icon} onChange={(e) => setIcon(e.target.value)} className="input" />
+            <EmojiPicker value={icon} onChange={setIcon} />
           </Field>
         </div>
         <Field label="Cover Photo (optional)">
@@ -267,7 +268,7 @@ function ProgramEditForm({
           <option value="INTERMEDIATE">Intermediate</option>
           <option value="ADVANCED">Advanced</option>
         </select>
-        <input value={icon} onChange={(e) => setIcon(e.target.value)} aria-label="Launcher emoji" className="input" />
+        <EmojiPicker value={icon} onChange={setIcon} />
       </div>
 
       <div>
