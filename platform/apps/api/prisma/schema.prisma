@@ -119,6 +119,10 @@ model User {
   /// Single-use token from the verification email; cleared once used.
   verificationToken String?   @unique
   verificationSentAt DateTime?
+  /// Single-use token from the password-reset email. Cleared the moment it is redeemed,
+  /// and only valid for a short window — `passwordResetSentAt` is what dates it.
+  passwordResetToken  String?   @unique
+  passwordResetSentAt DateTime?
   /// Opt-out for non-transactional email (new course announcements). On by default.
   emailNotifications Boolean  @default(true)
   role         UserRole

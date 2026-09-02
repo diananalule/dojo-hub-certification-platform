@@ -50,6 +50,7 @@ function LoginForm() {
   // Set when arriving straight from registration, so we can confirm the account was
   // created and save them retyping the address.
   const justRegistered = params.get('registered') === '1';
+  const justReset = params.get('reset') === '1';
   const prefillEmail = params.get('email') ?? '';
   const [error, setError] = useState<string | null>(null);
   const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle');
@@ -99,6 +100,12 @@ function LoginForm() {
         <p className="text-sm text-navy-500 max-w-xs mx-auto">Sign in with your credentials to access your workspace</p>
       </div>
 
+      {justReset && !error && (
+        <div className="p-3.5 bg-green-50 border border-green-200 text-green-800 rounded-xl text-sm font-medium animate-fadeIn">
+          Password updated. Sign in with your new password.
+        </div>
+      )}
+
       {justRegistered && !error && (
         <div className="p-3.5 bg-green-50 border border-green-200 text-green-800 rounded-xl text-sm font-medium animate-fadeIn">
           Account created. Check your email for a confirmation link — you&apos;ll need it before you can sign in.
@@ -145,6 +152,14 @@ function LoginForm() {
             <PasswordInput {...register('password')} className="input input-icon bg-navy-50" placeholder="••••••••" />
           </div>
           {errors.password && <p className="text-xs text-crimson-600">{errors.password.message}</p>}
+          <div className="text-right">
+            <Link
+              href="/forgot-password"
+              className="text-xs font-semibold text-navy-500 hover:text-crimson-600 transition-colors"
+            >
+              Forgot your password?
+            </Link>
+          </div>
         </div>
 
         <Button type="submit" loading={isSubmitting} className="w-full py-3.5 text-base">

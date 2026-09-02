@@ -79,6 +79,98 @@ export class AuthService {
     return { success: true };
   }
 
+  /** How long a reset link stays usable. Long enough to find the email, short enough
+   *  that an old message in an inbox is not a standing key to the account. */
+  private static readonly RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+
+  /**
+   * Starts a password reset.
+   *
+   * Always reports success, whether or not the address has an account. Answering
+   * honestly would turn this endpoint into a way to test which email addresses are
+   * registered on the platform, which is exactly what someone probing it would want.
+   */
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    // A suspended account should not be recoverable by its owner — that is the point
+    // of suspending it. An admin restores it first.
+    if (user && user.status === AccountStatus.ACTIVE) {
+      const passwordResetToken = randomUUID();
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordResetToken, passwordResetSentAt: new Date() },
+      });
+
+      const web =
+        this.configService.get<string>('webUrl') ?? 'https://dojo-hub-web.onrender.com';
+      await this.emailService.send({
+        to: user.email,
+        subject: 'Reset your Dojo Hub Learning Platform password',
+        block: {
+          heading: `Reset your password, ${user.name.split(' ')[0]}`,
+          intro:
+            'Use the button below to choose a new password. The link works once and expires ' +
+            'in one hour.',
+          ctaLabel: 'Choose a new password',
+          ctaUrl: `${web}/reset-password?token=${passwordResetToken}`,
+          outro:
+            'If you did not ask to reset your password, you can ignore this email — your ' +
+            'current password still works and nothing has changed.',
+        },
+      });
+    }
+
+    return { success: true };
+  }
+
+  /**
+   * Redeems a reset token and sets the new password.
+   *
+   * The token is cleared and every refresh token revoked, so anyone already signed in as
+   * this account — including whoever prompted the reset — is signed out and has to use
+   * the new password.
+   */
+  async resetPassword(token: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { passwordResetToken: token },
+    });
+
+    const expired =
+      !user?.passwordResetSentAt ||
+      Date.now() - user.passwordResetSentAt.getTime() > AuthService.RESET_TOKEN_TTL_MS;
+
+    if (!user || expired) {
+      throw new BadRequestException(
+        'This reset link is invalid or has expired. Request a new one.',
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetSentAt: null,
+        // Someone who can prove control of the mailbox has proved the address is theirs,
+        // so an unverified account becomes verified rather than being left unable to sign
+        // in with the password it just set.
+        emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
+        verificationToken: null,
+      },
+    });
+
+    await this.prisma.refreshToken.updateMany({
+      where: { userId: user.id },
+      data: { revoked: true },
+    });
+
+    return { success: true };
+  }
+
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
